@@ -1,165 +1,6 @@
-# -*- coding:utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import math
-
-from PIL import Image, ImageDraw, ImageFont
-import base64
 import cv2
 import numpy as np
-
-
-def draw_ocr(image,
-             boxes,
-             txts,
-             scores,
-             font_file,
-             draw_txt=True,
-             drop_score=0.5):
-    """
-    Visualize the results of OCR detection and recognition
-    args:
-        image(Image|array): RGB image
-        boxes(list): boxes with shape(N, 4, 2)
-        txts(list): the texts
-        scores(list): txxs corresponding scores
-        draw_txt(bool): whether draw text or not
-        drop_score(float): only scores greater than drop_threshold will be visualized
-    return(array):
-        the visualized img
-    """
-    if scores is None:
-        scores = [1] * len(boxes)
-    for (box, score) in zip(boxes, scores):
-        if score < drop_score or math.isnan(score):
-            continue
-        box = np.reshape(np.array(box), [-1, 1, 2]).astype(np.int64)
-        image = cv2.polylines(np.array(image), [box], True, (255, 0, 0), 2)
-
-    if draw_txt:
-        img = np.array(resize_img(image, input_size=600))
-        txt_img = text_visual(
-            txts,
-            scores,
-            font_file,
-            img_h=img.shape[0],
-            img_w=600,
-            threshold=drop_score)
-        img = np.concatenate([np.array(img), np.array(txt_img)], axis=1)
-        return img
-    return image
-
-
-def text_visual(texts, scores, font_file, img_h=400, img_w=600, threshold=0.):
-    """
-    create new blank img and draw txt on it
-    args:
-        texts(list): the text will be draw
-        scores(list|None): corresponding score of each txt
-        img_h(int): the height of blank img
-        img_w(int): the width of blank img
-    return(array):
-    """
-    if scores is not None:
-        assert len(texts) == len(
-            scores), "The number of txts and corresponding scores must match"
-
-    def create_blank_img():
-        blank_img = np.ones(shape=[img_h, img_w], dtype=np.int8) * 255
-        blank_img[:, img_w - 1:] = 0
-        blank_img = Image.fromarray(blank_img).convert("RGB")
-        draw_txt = ImageDraw.Draw(blank_img)
-        return blank_img, draw_txt
-
-    blank_img, draw_txt = create_blank_img()
-
-    font_size = 20
-    txt_color = (0, 0, 0)
-    font = ImageFont.truetype(font_file, font_size, encoding="utf-8")
-
-    gap = font_size + 5
-    txt_img_list = []
-    count, index = 1, 0
-    for idx, txt in enumerate(texts):
-        index += 1
-        if scores[idx] < threshold or math.isnan(scores[idx]):
-            index -= 1
-            continue
-        first_line = True
-        while str_count(txt) >= img_w // font_size - 4:
-            tmp = txt
-            txt = tmp[:img_w // font_size - 4]
-            if first_line:
-                new_txt = str(index) + ': ' + txt
-                first_line = False
-            else:
-                new_txt = '    ' + txt
-            draw_txt.text((0, gap * count), new_txt, txt_color, font=font)
-            txt = tmp[img_w // font_size - 4:]
-            if count >= img_h // gap - 1:
-                txt_img_list.append(np.array(blank_img))
-                blank_img, draw_txt = create_blank_img()
-                count = 0
-            count += 1
-        if first_line:
-            new_txt = str(index) + ': ' + txt + '   ' + '%.3f' % (scores[idx])
-        else:
-            new_txt = "  " + txt + "  " + '%.3f' % (scores[idx])
-        draw_txt.text((0, gap * count), new_txt, txt_color, font=font)
-        # whether add new blank img or not
-        if count >= img_h // gap - 1 and idx + 1 < len(texts):
-            txt_img_list.append(np.array(blank_img))
-            blank_img, draw_txt = create_blank_img()
-            count = 0
-        count += 1
-    txt_img_list.append(np.array(blank_img))
-    if len(txt_img_list) == 1:
-        blank_img = np.array(txt_img_list[0])
-    else:
-        blank_img = np.concatenate(txt_img_list, axis=1)
-    return np.array(blank_img)
-
-
-def str_count(s):
-    """
-    Count the number of Chinese characters,
-    a single English character and a single number
-    equal to half the length of Chinese characters.
-    args:
-        s(string): the input of string
-    return(int):
-        the number of Chinese characters
-    """
-    import string
-    count_zh = count_pu = 0
-    s_len = len(s)
-    en_dg_count = 0
-    for c in s:
-        if c in string.ascii_letters or c.isdigit() or c.isspace():
-            en_dg_count += 1
-        elif c.isalpha():
-            count_zh += 1
-        else:
-            count_pu += 1
-    return s_len - math.ceil(en_dg_count / 2)
-
-
-def resize_img(img, input_size=600):
-    img = np.array(img)
-    im_shape = img.shape
-    im_size_min = np.min(im_shape[0:2])
-    im_size_max = np.max(im_shape[0:2])
-    im_scale = float(input_size) / float(im_size_max)
-    im = cv2.resize(img, None, None, fx=im_scale, fy=im_scale)
-    return im
-
-
-def get_image_ext(image):
-    if image.shape[2] == 4:
-        return ".png"
-    return ".jpg"
 
 
 def sorted_boxes(dt_boxes):
@@ -171,8 +12,8 @@ def sorted_boxes(dt_boxes):
         sorted boxes(array) with shape [4, 2]
     """
     num_boxes = dt_boxes.shape[0]
-    sorted_boxes = sorted(dt_boxes, key=lambda x: (x[0][1], x[0][0]))
-    _boxes = list(sorted_boxes)
+    sorted_boxes_ = sorted(dt_boxes, key=lambda x: (x[0][1], x[0][0]))
+    _boxes = list(sorted_boxes_)
 
     for i in range(num_boxes - 1):
         if abs(_boxes[i + 1][0][1] - _boxes[i][0][1]) < 10 and \
@@ -183,8 +24,64 @@ def sorted_boxes(dt_boxes):
     return _boxes
 
 
-def base64_to_cv2(b64str):
-    data = base64.b64decode(b64str.encode('utf8'))
-    data = np.fromstring(data, np.uint8)
-    data = cv2.imdecode(data, cv2.IMREAD_COLOR)
-    return data
+def get_rotate_crop_image(img, points):
+    """
+    img_height, img_width = img.shape[0:2]
+    left = int(np.min(points[:, 0]))
+    right = int(np.max(points[:, 0]))
+    top = int(np.min(points[:, 1]))
+    bottom = int(np.max(points[:, 1]))
+    img_crop = img[top:bottom, left:right, :].copy()
+    points[:, 0] = points[:, 0] - left
+    points[:, 1] = points[:, 1] - top
+    """
+    img_crop_width = int(max(np.linalg.norm(points[0] - points[1]), np.linalg.norm(points[2] - points[3])))
+    img_crop_height = int(max(np.linalg.norm(points[0] - points[3]), np.linalg.norm(points[1] - points[2])))
+    pts_std = np.float32([[0, 0], [img_crop_width, 0], [img_crop_width, img_crop_height], [0, img_crop_height]])
+    M = cv2.getPerspectiveTransform(points, pts_std)
+    dst_img = cv2.warpPerspective(
+        img, M, (img_crop_width, img_crop_height), borderMode=cv2.BORDER_REPLICATE, flags=cv2.INTER_CUBIC)
+    dst_img_height, dst_img_width = dst_img.shape[0:2]
+    if dst_img_height * 1.0 / dst_img_width >= 1.5:
+        dst_img = np.rot90(dst_img)
+    return dst_img
+
+
+def resize_norm_img_cls(img):
+    cls_image_shape = [3, 48, 192]
+    img_c, img_h, img_w = cls_image_shape
+    h = img.shape[0]
+    w = img.shape[1]
+    ratio = w / h
+    if math.ceil(img_h * ratio) > img_w:
+        resized_w = img_w
+    else:
+        resized_w = int(math.ceil(img_h * ratio))
+    resized_image = cv2.resize(img, (resized_w, img_h))
+    resized_image = resized_image.astype('float32')
+    if cls_image_shape[0] == 1:
+        resized_image = resized_image / 255
+        resized_image = resized_image[np.newaxis, :]
+    else:
+        resized_image = resized_image.transpose((2, 0, 1)) / 255
+    resized_image -= 0.5
+    resized_image /= 0.5
+    padding_im = np.zeros((img_c, img_h, img_w), dtype=np.float32)
+    padding_im[:, :, 0:resized_w] = resized_image
+    return padding_im
+
+
+def resize_norm_img_rec(img, max_wh_ratio):
+    img_c, img_h, img_w = [3, 32, 320]
+    assert img_c == img.shape[2]
+    img_w = int((32 * max_wh_ratio))
+    h, w = img.shape[:2]
+    ratio = w / h
+    if math.ceil(img_h * ratio) > img_w:
+        resized_w = img_w
+    else:
+        resized_w = int(math.ceil(img_h * ratio))
+    resized_image = (cv2.resize(img, (resized_w, img_h)).astype('float32').transpose((2, 0, 1)) / 255 - 0.5) / 0.5
+    padding_im = np.zeros((img_c, img_h, img_w), dtype=np.float32)
+    padding_im[:, :, 0:resized_w] = resized_image
+    return padding_im

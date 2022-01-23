@@ -1,14 +1,6 @@
-# -*- coding:utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import sys
-
 import cv2
 import numpy as np
 import pyclipper
-from PIL import ImageDraw
 from shapely.geometry import Polygon
 
 
@@ -69,9 +61,9 @@ class DBProcessTest(object):
             if int(resize_w) <= 0 or int(resize_h) <= 0:
                 return None, (None, None)
             im = cv2.resize(im, (int(resize_w), int(resize_h)))
-        except:
-            print(im.shape, resize_w, resize_h)
-            sys.exit(0)
+        except Exception as e:
+            raise Exception(f'Resizing error. {e}. Image shape: {im.shape}, '
+                            f'resized width: {resize_w}, resized height: {resize_h}')
         ratio_h = resize_h / float(h)
         ratio_w = resize_w / float(w)
         return im, (ratio_h, ratio_w)
@@ -140,7 +132,7 @@ class DBPostProcess(object):
 
         num_contours = min(len(contours), self.max_candidates)
         boxes = np.zeros((num_contours, 4, 2), dtype=np.int16)
-        scores = np.zeros((num_contours, ), dtype=np.float32)
+        scores = np.zeros((num_contours,), dtype=np.float32)
 
         for index in range(num_contours):
             contour = contours[index]
@@ -241,36 +233,3 @@ class DBPostProcess(object):
 
             boxes_batch.append(boxes)
         return boxes_batch
-
-
-def draw_boxes(image, boxes, scores=None, drop_score=0.5):
-    img = image.copy()
-    draw = ImageDraw.Draw(img)
-    if scores is None:
-        scores = [1] * len(boxes)
-    for (box, score) in zip(boxes, scores):
-        if score < drop_score:
-            continue
-        draw.line([(box[0][0], box[0][1]), (box[1][0], box[1][1])], fill='red')
-        draw.line([(box[1][0], box[1][1]), (box[2][0], box[2][1])], fill='red')
-        draw.line([(box[2][0], box[2][1]), (box[3][0], box[3][1])], fill='red')
-        draw.line([(box[3][0], box[3][1]), (box[0][0], box[0][1])], fill='red')
-        draw.line([(box[0][0] - 1, box[0][1] + 1),
-                   (box[1][0] - 1, box[1][1] + 1)],
-                  fill='red')
-        draw.line([(box[1][0] - 1, box[1][1] + 1),
-                   (box[2][0] - 1, box[2][1] + 1)],
-                  fill='red')
-        draw.line([(box[2][0] - 1, box[2][1] + 1),
-                   (box[3][0] - 1, box[3][1] + 1)],
-                  fill='red')
-        draw.line([(box[3][0] - 1, box[3][1] + 1),
-                   (box[0][0] - 1, box[0][1] + 1)],
-                  fill='red')
-    return img
-
-
-def get_image_ext(image):
-    if image.shape[2] == 4:
-        return ".png"
-    return ".jpg"
