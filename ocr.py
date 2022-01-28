@@ -7,7 +7,7 @@ from text_recognition import recognize_text
 
 
 class FolderOCR(QThread):
-    progress = pyqtSignal(tuple)
+    progress = pyqtSignal(int)
     error_message = pyqtSignal(str)
     done = pyqtSignal(bool)
 
@@ -58,5 +58,49 @@ class FolderOCR(QThread):
                                 cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255))
             cv2.imencode(output_image_ext.lower(), image)[1].tofile(output_path_image)
             del image, texts, boxes
-            self.progress.emit((i + 1, n_files))
+            progress_percentage = int((i + 1) / n_files * 100)
+            self.progress.emit(progress_percentage)
+        self.done.emit(True)
+
+
+class FileOCR(QThread):
+    progress = pyqtSignal(int)
+    error_message = pyqtSignal(str)
+    done = pyqtSignal(bool)
+
+    def __init__(self, input_file, output_folder):
+        super(FileOCR, self).__init__()
+        self.input_file = input_file
+        self.output_folder = output_folder
+
+    def run(self) -> None:
+        markup_folder = os.path.join(self.output_folder, 'markup_single_file')
+        if not os.path.exists(markup_folder):
+            os.mkdir(markup_folder)
+        text_folder = os.path.join(self.output_folder, 'text_single_file')
+        if not os.path.exists(text_folder):
+            os.mkdir(text_folder)
+        _, name = os.path.split(self.input_file)
+        pure_name, ext = os.path.splitext(name)
+        output_path_text = os.path.join(self.output_folder, 'text_single_file', pure_name + '.txt')
+        output_path_image = os.path.join(self.output_folder, 'markup_single_file', name)
+        try:
+            image = cv2.imdecode(np.fromfile(self.input_file, dtype=np.uint8), -1)[:, :, :3]
+            boxes = detect_text(image)
+            texts = recognize_text(image, boxes)
+        except Exception as e:
+            self.error_message.emit(f'{self.input_file} - {e}')
+            self.done.emit(True)
+            return
+        with open(output_path_text, 'w') as f:
+            for block in texts:
+                self.error_message.emit(block['text'])
+                f.write(block['text'] + '\n')
+                image = np.ascontiguousarray(image, dtype=np.uint8)
+                cv2.rectangle(image, block['text_box_position'][0], block['text_box_position'][2], (0, 0, 255))
+                cv2.putText(image, str(round(block['confidence'], 2)), block['text_box_position'][0],
+                            cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255))
+        cv2.imencode(ext.lower(), image)[1].tofile(output_path_image)
+        del image, boxes, texts
+        self.progress.emit(100)
         self.done.emit(True)

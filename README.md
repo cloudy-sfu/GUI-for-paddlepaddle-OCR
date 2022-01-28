@@ -92,10 +92,12 @@ Xcopy /E /I inference_model dist\main\inference_model
 
 ### 2. For directly using
 
-Download the latest release of this repository, unzip and run it.
+Download the latest release of this repository, unzip and run the shortcut of
+`ocr_win64.exe`.
 
 The program's disk space usage is indicated as Figure 1.
 
 <img src="doc/space_usage.png" width="400px" alt="disk space usage">
 
-Figure 1. The program's disk space usage.
+Figure 1. The program's disk space usage. This picture is drawn by 
+"Spacesniffer" program.

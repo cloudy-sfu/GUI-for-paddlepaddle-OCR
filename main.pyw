@@ -3,8 +3,7 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-
-from ocr import FolderOCR
+from ocr import FolderOCR, FileOCR
 
 
 class MyWindow(QMainWindow):
@@ -12,17 +11,21 @@ class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__(flags=Qt.Window)
         dpi = self.screen().logicalDotsPerInch() / 96
-        font_size = 14 if dpi <= 1 else (11 if 1 < dpi <= 1.25 else (9 if 1.25 < dpi <= 1.5 else 8))
+        font_size = 14 if dpi <= 1 else (12 if 1 < dpi <= 1.25 else (10 if 1.25 < dpi <= 1.5 else 8))
 
-        self.setFont(QFont('Calibri', font_size))
+        # self.setFont(QFont('Microsoft YaHei', font_size))
+        self.setStyleSheet(f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
         self.resize(800, 480)
         self.setWindowTitle('Chinese and English OCR')
         self.center()
 
         self.operator1 = None
+        self.operator2 = None
         self.busy = False
         self.output_folder = ''
         self.input_folder = ''
+        self.input_file = ''
+        self.input_clipboard = ''
         self.launch_action = None
 
         self.create_menu_bar()
@@ -46,23 +49,6 @@ class MyWindow(QMainWindow):
         self.status.showMessage('Ready.', 0)
         self.setStatusBar(self.status)
 
-        # self.pbar1 = QProgressBar(self)
-        # self.pbar1.move(10, 180)
-        # self.pbar1.setMinimumWidth(665)
-        #
-        # self.button4 = QToolButton(self)
-        # self.button4.move(670, 180)
-        # self.button4.setText('Launch')
-        # self.button4.clicked.connect(self.ocr_batch)
-        #
-        # self.label7 = QLabel(self)
-        # self.label7.move(10, 210)
-        # self.label7.setText('Error messages:')
-        #
-        # self.box3 = QTextEdit(self)
-        # self.box3.move(10, 240)
-        # self.box3.resize(620, 230)
-
     def create_menu_bar(self):
         menubar = QMenuBar()
 
@@ -75,15 +61,23 @@ class MyWindow(QMainWindow):
         close_program.triggered.connect(self.close)
         close_program.setShortcut('Alt+F4')
 
-        open_folder = QAction('&Open folder ...', self)
+        open_folder = QAction('Open f&older ...', self)
         open_folder.triggered.connect(self.define_input_folder)
+
+        open_file = QAction('Open f&ile ...', self)
+        open_file.triggered.connect(self.define_input_file)
+
+        paste_from_clipboard = QAction('&Paste from clipboard', self)
+        paste_from_clipboard.triggered.connect(self.define_input_clipboard)
+        paste_from_clipboard.setShortcut('Ctrl+Shift+V')
 
         close_input_anytype_action = QAction('&Close all', self)
         close_input_anytype_action.triggered.connect(self.close_input_anytype)
         close_input_anytype_action.setShortcut('Ctrl+W')
 
         file_menu = QMenu('&File', self)
-        file_menu.addActions([new_project, open_folder, close_input_anytype_action, close_program])
+        file_menu.addActions([new_project, open_folder, open_file, paste_from_clipboard, close_input_anytype_action,
+                              close_program])
         menubar.addMenu(file_menu)
 
         # Run menu
@@ -161,6 +155,37 @@ class MyWindow(QMainWindow):
             self.launch_action.triggered.connect(self.ocr_batch)
             self.input_anytype_displayed.setText(self.input_folder)
 
+    @status_check_decorator(action_name='Copy from clipboard')
+    def define_input_clipboard(self):
+        if not self.output_folder:
+            self.message.append('Project is not defined.')
+            return
+        clipboard_saved_path = os.path.join(self.output_folder, 'origin_clipboard')
+        if not os.path.exists(clipboard_saved_path):
+            os.mkdir(clipboard_saved_path)
+        clipboard = QApplication.clipboard()
+        picture = clipboard.pixmap()
+        input_clipboard = os.path.join(clipboard_saved_path, f'hash_{hash(picture)}.png')
+        if picture.save(input_clipboard):
+            self.input_clipboard = input_clipboard
+            self.message.append(f'Saved successfully at {self.input_clipboard}')
+            self.launch_action.triggered.connect(self.ocr_clipboard)
+            self.input_anytype_displayed.setText(self.input_clipboard)
+        else:
+            self.message.append('No picture is detected.')
+
+    @status_check_decorator(action_name='Open file')
+    def define_input_file(self):
+        fp, _ = QFileDialog.getOpenFileName(self, filter='Images (*.png *.jpeg *.jpg)')
+        if fp:
+            self.input_file = fp
+            try:
+                self.launch_action.disconnect()
+            except TypeError:
+                pass
+            self.launch_action.triggered.connect(self.ocr_single)
+            self.input_anytype_displayed.setText(self.input_file)
+
     @delayed_thread_check_decorator(action_name='OCR for folder')
     def ocr_batch(self):
         if (not os.path.exists(self.input_folder)) or (not os.path.exists(self.output_folder)) or \
@@ -171,14 +196,39 @@ class MyWindow(QMainWindow):
         # define the operator as class-level private property, to prevent being destroyed before finished.
         self.operator1 = FolderOCR(self.input_folder, self.output_folder)
         self.operator1.start()
-        self.operator1.progress.connect(lambda x: self.pbar.setValue(int(x[0] / x[1] * 100)))
+        self.operator1.progress.connect(lambda x: self.pbar.setValue(x))
         self.operator1.error_message.connect(lambda x: self.message.append(x))
         self.operator1.done.connect(lambda x: self.delayed_thread_finished())
+
+    @delayed_thread_check_decorator(action_name='OCR for single image')
+    def ocr_single(self):
+        if (not os.path.exists(self.input_file)) or (not os.path.exists(self.output_folder)):
+            self.message.append('The project or opened folder does not exist.')
+            self.delayed_thread_finished()
+            return
+        self.operator2 = FileOCR(self.input_file, self.output_folder)
+        self.operator2.start()
+        self.operator2.progress.connect(lambda x: self.pbar.setValue(x))
+        self.operator2.error_message.connect(lambda x: self.message.append(x))
+        self.operator2.done.connect(lambda x: self.delayed_thread_finished())
+
+    @delayed_thread_check_decorator(action_name='OCR for clipboard saved image')
+    def ocr_clipboard(self):
+        if (not os.path.exists(self.input_clipboard)) or (not os.path.exists(self.output_folder)):
+            self.message.append('The project or opened folder does not exist.')
+            self.delayed_thread_finished()
+            return
+        self.operator2 = FileOCR(self.input_clipboard, self.output_folder)
+        self.operator2.start()
+        self.operator2.progress.connect(lambda x: self.pbar.setValue(x))
+        self.operator2.error_message.connect(lambda x: self.message.append(x))
+        self.operator2.done.connect(lambda x: self.delayed_thread_finished())
 
     @status_check_decorator(action_name='Close')
     def close_input_anytype(self):
         self.input_folder = ''
-        self.input_anytype_displayed.setText(self.input_folder)
+        self.input_file = ''
+        self.input_anytype_displayed.setText('')
         try:
             self.launch_action.disconnect()
         except TypeError:
@@ -205,7 +255,8 @@ class MyWindow(QMainWindow):
     def print_author_info(self):
         author_info = '\n'.join([
             'Author:  cloudy-sfu on github.com',
-            'Version: 0.1.0'
+            'Version: 0.1.3'
+            'Models:  deep learning models trained by paddlepaddle, baidu company'
         ])
         self.message.append(author_info)
 
