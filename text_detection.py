@@ -62,36 +62,17 @@ def filter_tag_det_res(dt_boxes, image_shape):
     return dt_boxes
 
 
-def detect_text(images=None):
-    if not images:
-        "There is not any image to be predicted. Please check the input data."
-    predicted_data = images
-    # assert predicted_data != [], "There is not any image to be predicted. Please check the input data."
-
-    all_imgs = []
-    all_ratios = []
-    all_results = []
-    for original_image in predicted_data:
-        im, ratio_list = preprocessor(original_image)
-        res = {'save_path': ''}
-        if im is None:
-            res['data'] = []
-        else:
-            im = im.copy()
-            input_tensor.copy_from_cpu(im)
-            predictor.zero_copy_run()
-            outputs = []
-            for output_tensor_ in output_tensors:
-                output = output_tensor_.copy_to_cpu()
-                outputs.append(output)
-            outs_dict = {}
-            outs_dict['maps'] = outputs[0]
-            dt_boxes_list = postprocessor(outs_dict, [ratio_list])
-            boxes = filter_tag_det_res(dt_boxes_list[0],
-                                       original_image.shape)
-            res['data'] = boxes.astype(np.int).tolist()
-
-            all_imgs.append(im)
-            all_ratios.append(ratio_list)
-        all_results.append(res)
-    return all_results
+def detect_text(original_image):
+    im, ratio_list = preprocessor(original_image)
+    im = im.copy()
+    input_tensor.copy_from_cpu(im)
+    predictor.zero_copy_run()
+    outputs = []
+    for output_tensor_ in output_tensors:
+        output = output_tensor_.copy_to_cpu()
+        outputs.append(output)
+    dt_boxes_list = postprocessor({'maps': outputs[0]}, [ratio_list])
+    boxes = filter_tag_det_res(dt_boxes_list[0],
+                               original_image.shape)
+    res = boxes.astype(np.float32)
+    return res
