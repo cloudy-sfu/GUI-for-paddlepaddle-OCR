@@ -88,12 +88,6 @@ pyinstaller main.spec
 Xcopy /E /I inference_model dist\main\inference_model
 ```
 
-(3) Create a shortcut at `dist\` and edit the "Target" property as:
-
-```
-%windir%\system32\cmd.exe /c start "" "main/ocr_win64.exe"
-```
-
 ### 2. For directly using
 
 Download the latest release of this repository, unzip and run the shortcut of
