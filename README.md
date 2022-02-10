@@ -1,6 +1,6 @@
-# "paddlepaddle" Clean OCR
+# GUI for "paddlepaddle" OCR
 
- A clean version of "paddlepaddle" OCR
+ The GUI for "paddlepaddle" OCR isolated version
 
 ![](https://shields.io/badge/OS-Windows%2010%2064--bit-lightgray)
 ![](https://shields.io/badge/dependencies-Python%203.9-blue)
@@ -15,6 +15,9 @@ from both the clipboard and the file system.
 Currently, support
 - Language: Chinese, English
 - Format of images: `*.png`, `*.jpg`
+
+<img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png" 
+     width="400px" alt="screenshot">
 
 ## Citation
 
