@@ -169,6 +169,7 @@ class MyWindow(QMainWindow):
             self.message.append('No picture is detected.')
             self.delayed_thread_finished()
             return
+        self.input_anytype_displayed.setText(fp)
 
         self.operator2 = FileOCR(fp, self.config['project_root'])
         self.operator2.start()
@@ -188,6 +189,7 @@ class MyWindow(QMainWindow):
             self.message.append('The image to recognize does not exist.')
             self.delayed_thread_finished()
             return
+        self.input_anytype_displayed.setText(fp)
 
         self.operator2 = FileOCR(fp, self.config['project_root'])
         self.operator2.start()
