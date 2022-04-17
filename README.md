@@ -1,10 +1,10 @@
 # GUI for "paddlepaddle" OCR
 
- The GUI for "paddlepaddle" OCR isolated version
+ The GUI for "paddlepaddle" OCR, standalone version
 
-![](https://shields.io/badge/OS-Windows%2010%2064--bit-lightgray)
-![](https://shields.io/badge/dependencies-Python%203.9-blue)
-![](https://shields.io/badge/language-Chinese,%20English-pink)
+![](https://shields.io/badge/OS-Windows%2010%2064--bit-lightgray.svg)
+![](https://shields.io/badge/dependencies-Python%203.9-blue.svg)
+![](https://shields.io/badge/language-Chinese,%20English-pink.svg)
 
 ## Introduction
 
@@ -13,11 +13,11 @@ OCR models. With this program, users can recognize text included in images
 from both the clipboard and the file system.
 
 Currently, support
+
 - Language: Chinese, English
 - Format of images: `*.png`, `*.jpg`
 
-<img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png" 
-     width="400px" alt="screenshot">
+<img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png"      width="400px" alt="screenshot">
 
 ## Citation
 
@@ -32,25 +32,31 @@ in this repository.
 
 ## Usage
 
-### 1. For compiling
+Download the latest release of this repository, unzip and run the shortcut of `ocr_win64.exe`.
 
-Follow these steps to compile an *.exe file on Windows 10 64-bit platform.
+### 1. Compiling
 
-(1) Make some modifications in `paddlepaddle` package, which are listed below.
+**Windows 10 64-bit**
 
-|             |                                                     |
-|-------------|-----------------------------------------------------|
-| File path   | `paddle/fluid/proto/pass_desc_pb2.py`               |
-| Line number | 16                                                  |
-| From        | ```import framework_pb2 as framework__pb2```        |
-| To          | ```from . import framework_pb2 as framework__pb2``` |
+(1) Make the root folder of Python external library, such as`venv\Lib\site-packages` or `~/.conda/envs/.../Lib/site-packages`, as the current folder.
 
-|             |                           |
-|-------------|---------------------------|
-| File path   | `paddle/dataset/image.py` |
-| Line number | 39-62                     |
-| From        | code 1.                   |
-| To          | `import cv2`              |
+(2) Modify line 16 of `paddle/fluid/proto/pass_desc_pb2.py`
+
+Replace
+
+```python
+import framework_pb2 as framework__pb2
+```
+
+with
+
+```python
+from . import framework_pb2 as framework__pb2
+```
+
+(3) Modify line 39-62 of `paddle/dataset/image.py`
+
+Replace
 
 ```python
 if six.PY3:
@@ -78,27 +84,18 @@ else:
     except ImportError:
         cv2 = None
 ```
-Code 1. The original code that `paddlepaddle` imports `cv2`.
 
-Note: The file path should start with the path to site packages. For example, 
-`venv\Lib\site-packages` or `~/.conda/envs/.../Lib/site-packages`.
+with
 
-(2) Start the command line and make the current folder as the project root 
-directory. Then, run the following command:
-
+```python
+import cv2
 ```
+
+(4) Make the project root as the current folder.
+
+(5) Run
+
+```bash
 pyinstaller main.spec 
 Xcopy /E /I inference_model dist\main\inference_model
 ```
-
-### 2. For directly using
-
-Download the latest release of this repository, unzip and run the shortcut of
-`ocr_win64.exe`.
-
-The program's disk space usage is indicated as Figure 1.
-
-<img src="doc/space_usage.png" width="400px" alt="disk space usage">
-
-Figure 1. The program's disk space usage. This picture is drawn by 
-"Spacesniffer" program.
