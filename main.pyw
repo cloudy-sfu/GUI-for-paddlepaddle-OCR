@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from PyQt5.QtCore import *
@@ -13,9 +12,10 @@ class MyWindow(QMainWindow):
         super(MyWindow, self).__init__(flags=Qt.Window)
         dpi = self.screen().logicalDotsPerInch() / 96
         font_size = 14 if dpi <= 1 else (12 if 1 < dpi <= 1.25 else (10 if 1.25 < dpi <= 1.5 else 8))
-        with open('inference_model/project.json', 'r') as f:
-            self.config = json.load(f)
-
+        if not os.path.isdir('raw/'):
+            os.mkdir('raw/')
+        if not os.path.isdir('raw/clipboard'):
+            os.mkdir('raw/clipboard/')
         self.setStyleSheet(f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
         self.resize(800, 480)
         self.setWindowTitle('Chinese and English OCR')
@@ -24,11 +24,12 @@ class MyWindow(QMainWindow):
         self.operator1 = None
         self.operator2 = None
         self.busy = False
+        self.project_root = os.path.abspath('raw/')
 
         self.create_menu_bar()
 
         self.project_root_displayed = QLabel(self)
-        self.project_root_displayed.setText(self.config['project_root'])
+        self.project_root_displayed.setText(self.project_root)
         self.input_anytype_displayed = QLabel(self)
         self.pbar = QProgressBar(self)
         self.message = QTextEdit(self)
@@ -36,8 +37,8 @@ class MyWindow(QMainWindow):
         main_part = QWidget(self)
         main_layout = QFormLayout(main_part)
         main_layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        main_layout.addRow('Project:', self.project_root_displayed)
-        main_layout.addRow('Opened:', self.input_anytype_displayed)
+        main_layout.addRow('Source:', self.input_anytype_displayed)
+        main_layout.addRow('Target:', self.project_root_displayed)
         main_layout.addRow('Progress:', self.pbar)
         main_layout.addRow('Message:', self.message)
         self.setCentralWidget(main_part)
@@ -50,24 +51,21 @@ class MyWindow(QMainWindow):
         menubar = QMenuBar()
 
         # File menu
-        new_project = QAction('&New project ...', self)
-        new_project.triggered.connect(self.define_project)
-        new_project.setShortcut('Ctrl+T')
-
-        open_project_root_action = QAction('&Open project folder ...', self)
+        open_project_root_action = QAction('&Open target folder ...', self)
         open_project_root_action.triggered.connect(self.open_project_root)
 
         close_program = QAction('&Exit', self)
-        close_program.triggered.connect(self.save_and_close)
+        close_program.triggered.connect(self.close)
         close_program.setShortcut('Alt+F4')
 
         file_menu = QMenu('&File', self)
-        file_menu.addActions([new_project, open_project_root_action, close_program])
+        file_menu.addActions([open_project_root_action, close_program])
         menubar.addMenu(file_menu)
 
         # Recognize menu
         open_folder = QAction('From &folder ...', self)
         open_folder.triggered.connect(self.ocr_batch)
+        open_folder.setShortcut('Ctrl+T')
 
         open_file = QAction('From &single image ...', self)
         open_file.triggered.connect(self.ocr_single)
@@ -89,11 +87,6 @@ class MyWindow(QMainWindow):
         menubar.addMenu(about_menu)
 
         self.setMenuBar(menubar)
-
-    def save_and_close(self):
-        with open('inference_model/project.json', 'w') as f:
-            json.dump(self.config, f)
-        self.close()
 
     def status_check_decorator(action_name, *args, **kwargs):
         def status_check_decorator_1(pyfunc):
@@ -127,82 +120,63 @@ class MyWindow(QMainWindow):
 
         return delayed_thread_check_decorator_1
 
-    @status_check_decorator(action_name='Define project')
-    def define_project(self):
-        self.config['project_root'] = QFileDialog.getExistingDirectory(self)
-        self.project_root_displayed.setText(self.config['project_root'])
-
     @delayed_thread_check_decorator(action_name='Recognize folder')
     def ocr_batch(self):
-        if not self.config['project_root']:
-            self.message.append('Project is not defined.')
+        fp = QFileDialog.getExistingDirectory(self, caption='Images to recognize', options=QFileDialog.ShowDirsOnly)
+        if not (fp and os.path.isdir(fp)):
+            self.message.append('The source to recognize does not exist.')
             self.delayed_thread_finished()
             return
-
-        fp = QFileDialog.getExistingDirectory(self)
-        if not (fp and os.path.exists(fp) and fp != self.config['project_root']):
-            self.message.append('The folder to recognize does not exist.')
+        dist = QFileDialog.getExistingDirectory(self, caption='Export to', options=QFileDialog.ShowDirsOnly)
+        if not (dist and os.path.exists(dist)):
+            self.message.append('The target to export does not exist.')
             self.delayed_thread_finished()
             return
-
+        self.project_root = dist
         self.input_anytype_displayed.setText(fp)
-        self.operator1 = FolderOCR(fp, self.config['project_root'])
+        self.operator1 = FolderOCR(fp, dist)
         self.operator1.start()
         self.operator1.progress.connect(lambda x: self.pbar.setValue(x))
-        self.operator1.error_message.connect(lambda x: self.message.append(x))
+        self.operator1.gui_message.connect(lambda x: self.message.append(x))
         self.operator1.done.connect(lambda x: self.delayed_thread_finished())
 
     @delayed_thread_check_decorator(action_name='Recognize from clipboard')
     def ocr_clipboard(self):
-        if not self.config['project_root']:
-            self.message.append('Project is not defined.')
-            self.delayed_thread_finished()
-            return
-
-        clipboard_saved_path = os.path.join(self.config['project_root'], 'origin_clipboard')
-        if not os.path.exists(clipboard_saved_path):
-            os.mkdir(clipboard_saved_path)
         clipboard = QApplication.clipboard()
         picture = clipboard.pixmap()
-        fp = os.path.join(clipboard_saved_path, f'hash_{hash(picture)}.png')
+        fp = os.path.join('raw/clipboard', f'hash_{hash(picture)}.png')
         if not picture.save(fp):
             self.message.append('No picture is detected.')
             self.delayed_thread_finished()
             return
         self.input_anytype_displayed.setText(fp)
-
-        self.operator2 = FileOCR(fp, self.config['project_root'])
+        self.operator2 = FileOCR(fp, 'raw/')
         self.operator2.start()
         self.operator2.progress.connect(lambda x: self.pbar.setValue(x))
-        self.operator2.error_message.connect(lambda x: self.message.append(x))
+        self.operator2.gui_message.connect(lambda x: self.message.append(x))
         self.operator2.done.connect(lambda x: self.delayed_thread_finished())
 
     @delayed_thread_check_decorator(action_name='OCR for single image')
     def ocr_single(self):
-        if not self.config['project_root']:
-            self.message.append('Project is not defined.')
-            self.delayed_thread_finished()
-            return
-
         fp, _ = QFileDialog.getOpenFileName(self, filter='Images (*.png *.jpeg *.jpg)')
-        if not (fp and os.path.exists(fp)):
+        if not (fp and os.path.isfile(fp)):
             self.message.append('The image to recognize does not exist.')
             self.delayed_thread_finished()
             return
         self.input_anytype_displayed.setText(fp)
 
-        self.operator2 = FileOCR(fp, self.config['project_root'])
+        self.operator2 = FileOCR(fp, 'raw/')
         self.operator2.start()
         self.operator2.progress.connect(lambda x: self.pbar.setValue(x))
-        self.operator2.error_message.connect(lambda x: self.message.append(x))
+        self.operator2.gui_message.connect(lambda x: self.message.append(x))
         self.operator2.done.connect(lambda x: self.delayed_thread_finished())
 
-    @status_check_decorator(action_name='Open project folder')
+    @status_check_decorator(action_name='Open target folder')
     def open_project_root(self):
-        if not os.path.exists(self.config['project_root']):
-            self.message.append('The project folder does not exist.')
+        if not os.path.exists(self.project_root):
+            self.message.append('The target folder does not exist.')
         q_url = QUrl()
-        QDesktopServices.openUrl(q_url.fromLocalFile(self.config['project_root']))
+        QDesktopServices.openUrl(q_url.fromLocalFile(self.project_root))
 
     def delayed_thread_finished(self):
         self.busy = False

@@ -1,5 +1,5 @@
 import os
-from paddle.fluid.core_avx import create_paddle_predictor, AnalysisConfig
+from paddle.fluid.core import create_paddle_predictor, AnalysisConfig
 
 
 def set_config(pretrained_model_path):

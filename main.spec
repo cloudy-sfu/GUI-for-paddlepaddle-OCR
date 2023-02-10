@@ -1,13 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 block_cipher = None
 
 
 a = Analysis(['main.pyw'],
              pathex=[],
-             binaries=[('venv/Lib/site-packages/paddle/libs', 'paddle/libs')],
-             datas=[],
+             binaries=[('venv/Lib/site-packages/paddle/libs', 'paddle/libs'),
+                       ('geos_c.dll', '_pyinstaller_hooks_contrib/hooks/stdhooks/geos_c.dll')],
+             datas=[('inference_model', 'inference_model')],
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},
@@ -24,7 +24,7 @@ exe = EXE(pyz,
           a.scripts, 
           [],
           exclude_binaries=True,
-          name='ocr_win64',
+          name='GUI-for-paddlepaddle-OCR',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,

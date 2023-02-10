@@ -3,8 +3,8 @@
  The GUI for "paddlepaddle" OCR, standalone version
 
 ![](https://shields.io/badge/OS-Windows%2010%2064--bit-lightgray.svg)
-![](https://shields.io/badge/dependencies-Python%203.9-blue.svg)
-![](https://shields.io/badge/language-Chinese,%20English-pink.svg)
+![](https://shields.io/badge/dependencies-Python%203.10-blue.svg)
+![](https://shields.io/badge/languages-zh,%20en-pink.svg)
 
 ## Introduction
 
@@ -14,49 +14,39 @@ from both the clipboard and the file system.
 
 Currently, support
 
-- Language: Chinese, English
-- Format of images: `*.png`, `*.jpg`
+1. It can recognize both Chinese and English (Latin) characters.
+2. It supports the images in format of `*.png` and `*.jpg`.
 
-<img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png"      width="400px" alt="screenshot">
+**Screenshot**
+
+<img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png" width="400px" alt="screenshot">
 
 ## Citation
 
-All used packages are listed in `requirements.txt`. 
+All used packages are listed in `requirements.txt`.
 
-Specially, `paddlepaddle` are disassembled and separately used. The OCR models
-(in `inference_models` folder included in source code and released program)
-and `*.dll` binary files (in `paddle/libs` folder included in released program)
-are provided by "paddlepaddle". Therefore, **ONLY IF YOU TRUST** 
-"paddlepaddle", can you use files (both source code and released program)
-in this repository.
+Specifically, the files in `inference_models` are provided by `paddlepaddle`. 
+See the license of them at https://github.com/PaddlePaddle/PaddleOCR before 
+copy, share, redistribute, modify etc. them.
 
 ## Usage
 
-Download the latest release of this repository, unzip and run the shortcut of `ocr_win64.exe`.
+**For terminal users**
 
-### 1. Compiling
+Download the latest release of this repository, unzip and run 
+`GUI-for-paddlepaddle-OCR.exe`.
 
-**Windows 10 64-bit**
+**For developers**
 
-(1) Make the root folder of Python external library, such as`venv\Lib\site-packages` or `~/.conda/envs/.../Lib/site-packages`, as the current folder.
+(1) Make the root folder of Python external library, such as 
+`venv\Lib\site-packages` (in Windows) or `~/.conda/envs/.../Lib/site-packages` 
+(in Linux), as the current folder in terminal.
 
-(2) Modify line 16 of `paddle/fluid/proto/pass_desc_pb2.py`
+(2) Modify line 16 of `paddle/fluid/proto/pass_desc_pb2.py`: replace
+`import framework_pb2 as framework__pb2` with
+`from . import framework_pb2 as framework__pb2`.
 
-Replace
-
-```python
-import framework_pb2 as framework__pb2
-```
-
-with
-
-```python
-from . import framework_pb2 as framework__pb2
-```
-
-(3) Modify line 39-62 of `paddle/dataset/image.py`
-
-Replace
+(3) Modify line 39-62 of `paddle/dataset/image.py`: replace
 
 ```python
 if six.PY3:
@@ -84,18 +74,24 @@ else:
     except ImportError:
         cv2 = None
 ```
+with `import cv2`.
 
-with
-
+(4) Comment line 35-46 of `_pyinstaller_hooks_contrib\hooks\stdhooks\hook-shapely.py` as follows.
 ```python
-import cv2
+    # original_path = os.environ['PATH']
+    # try:
+    #     os.environ['PATH'] = os.pathsep.join(lib_paths)
+    #     dll_path = find_library('geos_c')
+    # finally:
+    #     os.environ['PATH'] = original_path
+    # if dll_path is None:
+    #     raise SystemExit(
+    #         "Error: geos_c.dll not found, required by hook-shapely.py.\n"
+    #         "Please check your installation or provide a pull request to "
+    #         "PyInstaller to update hook-shapely.py.")
+    # binaries += [(dll_path, '.')]
 ```
 
-(4) Make the project root as the current folder.
+(5) Make the project root as the current folder in terminal.
 
-(5) Run
-
-```bash
-pyinstaller main.spec 
-Xcopy /E /I inference_model dist\main\inference_model
-```
+(6) Run `pyinstaller main.spec` in terminal.

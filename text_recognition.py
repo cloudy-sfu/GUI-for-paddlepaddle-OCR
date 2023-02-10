@@ -109,7 +109,7 @@ def recognize_text(image, boxes, text_thresh=0.5, angle_classification_thresh=0.
             rec_res_final.append({
                 'text': text_,
                 'confidence': float(score),
-                'text_box_position': boxes[index_].astype(np.int).tolist()
+                'text_box_position': boxes[index_].astype(np.int32).tolist()
             })
     # List[ each_block: Dict["text": str, "confidence": float, "text_box_position": List[4*2] ] ]
     # text_box_position: [LU: [col_id, row_id], RU: ..., RD: ..., LD: ...]
