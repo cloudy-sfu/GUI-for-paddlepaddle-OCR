@@ -6,7 +6,7 @@ block_cipher = None
 a = Analysis(['main.pyw'],
              pathex=[],
              binaries=[('venv/Lib/site-packages/paddle/libs', 'paddle/libs'),
-                       ('geos_c.dll', '_pyinstaller_hooks_contrib/hooks/stdhooks/geos_c.dll')],
+                       ('patch/geos_c.dll', '_pyinstaller_hooks_contrib/hooks/stdhooks/geos_c.dll')],
              datas=[('inference_model', 'inference_model')],
              hiddenimports=[],
              hookspath=[],

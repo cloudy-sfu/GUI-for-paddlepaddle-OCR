@@ -18,7 +18,7 @@ class MyWindow(QMainWindow):
             os.mkdir('raw/clipboard/')
         self.setStyleSheet(f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
         self.resize(800, 480)
-        self.setWindowTitle('Chinese and English OCR')
+        self.setWindowTitle('GUI for paddlepaddle OCR')
         self.center()
 
         self.operator1 = None
@@ -191,9 +191,9 @@ class MyWindow(QMainWindow):
     @status_check_decorator(action_name='Print author\'s information')
     def print_author_info(self):
         author_info = '\n'.join([
-            'Author:  cloudy-sfu on github.com',
-            'Version: 0.1.4',
-            'Models:  deep learning models trained by paddlepaddle, baidu company'
+            'Author: cloudy-sfu@GitHub',
+            'Version: 0.1.5',
+            'Models: paddlepaddle by baidu'
         ])
         self.message.append(author_info)
 
