@@ -10,21 +10,21 @@
 
 A Windows GUI to perform optical character recognition, using "paddlepaddle" OCR models. With this program, users can recognize text included in images from both the clipboard and the file system.
 
-Currently, support recognizing both Chinese and Latin characters from  `*.png` and *.jpg` images.
+Currently, support recognizing both Chinese and Latin characters from  `*.png` and `*.jpg` images.
 
-Screenshot:
-
-<img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png" width="600px" alt="screenshot">
+<details>
+ <summary><b>Screenshot</b></summary>
+ <img src="https://user-images.githubusercontent.com/41314224/152323922-6b36c258-8908-4ba0-a50b-b21e1d069754.png" alt="screenshot">
+</details>
 
 ## Usage
 
-Terminal users:
+**Release:**
 
-Download the latest release of this repository, unzip and run `GUI-for-paddlepaddle-OCR.exe`.
+1. Download and unzip the latest release.
+2. Run `GUI-for-paddlepaddle-OCR.exe`.
 
----
-
-Developers:
+**Compile from source code:**
 
 1. Make the root folder of Python external library, such as    `venv\Lib\site-packages` (in Windows) or `~/.conda/envs/.../Lib/site-packages`  (in Linux), as the current folder in terminal.
 
@@ -83,4 +83,4 @@ Developers:
 
 All used packages are listed in `requirements.txt`.
 
-Specifically, the files in `inference_models` are provided by `paddlepaddle`. See the license of them at https://github.com/PaddlePaddle/PaddleOCR before to copy, share, redistribute, modify them.
+Specifically, the files in `inference_models` are provided by `paddlepaddle`. See the license at https://github.com/PaddlePaddle/PaddleOCR before to copy, share, redistribute, modify them.
