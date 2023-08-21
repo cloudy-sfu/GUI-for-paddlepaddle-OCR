@@ -4,18 +4,16 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from ocr import FolderOCR, FileOCR
+from math import max
 
 
 class MyWindow(QMainWindow):
 
     def __init__(self):
         super(MyWindow, self).__init__(flags=Qt.Window)
-        dpi = self.screen().logicalDotsPerInch() / 96
-        font_size = 14 if dpi <= 1 else (12 if 1 < dpi <= 1.25 else (10 if 1.25 < dpi <= 1.5 else 8))
-        if not os.path.isdir('raw/'):
-            os.mkdir('raw/')
-        if not os.path.isdir('raw/clipboard'):
-            os.mkdir('raw/clipboard/')
+        dpi = self.screen().logicalDotsPerInch()
+        font_size = max(6, round(22 - dpi / 12))
+        os.makedirs('raw/clipboard/', exist_ok=True)
         self.setStyleSheet(f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
         self.resize(800, 480)
         self.setWindowTitle('GUI for paddlepaddle OCR')
@@ -190,12 +188,8 @@ class MyWindow(QMainWindow):
 
     @status_check_decorator(action_name='Print author\'s information')
     def print_author_info(self):
-        author_info = '\n'.join([
-            'Author: cloudy-sfu@GitHub',
-            'Version: 0.1.5',
-            'Models: paddlepaddle by baidu'
-        ])
-        self.message.append(author_info)
+        with open('author_info.txt') as f:
+            self.message.append(f.read())
 
     # Deceive IDE grammar warning; must be written end of the class.
     status_check_decorator = staticmethod(status_check_decorator)
