@@ -2,8 +2,14 @@ import os
 import cv2
 import numpy as np
 from PyQt5.QtCore import *
-from text_detection import detect_text
-from text_recognition import recognize_text
+from paddleocr import PaddleOCR
+from paddleocr.ppocr.utils.utility import alpha_to_color
+
+ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", show_log=False,
+                       det_algorithm='DB++',
+                       det_model_dir="inference_models/ch_PP-OCRv4_det_infer/",
+                       rec_model_dir="inference_models/ch_PP-OCRv4_rec_infer/",
+                       cls_model_dir="inference_models/ch_ppocr_mobile_v2.0_cls_infer/")
 
 
 class FolderOCR(QThread):
@@ -27,40 +33,58 @@ class FolderOCR(QThread):
         # get files' path
         filenames = []
         for parent, _, files in os.walk(self.input_folder):
-            filenames += [(parent, x) for x in files if os.path.splitext(x)[1].lower() in ['.jpg', '.png']]
+            filenames += [(parent, x) for x in files if
+                          os.path.splitext(x)[1].lower() in ['.jpg', '.png']]
         n_files = len(filenames)
         if n_files == 0:
             self.gui_message.emit('This folder doesn\'t contains any picture.')
             self.done.emit(True)
             return
-        # OCR
+        # batch logic
         for i, (parent, name) in zip(range(n_files), filenames):
             filepath = os.path.join(parent, name)
             output_image_name, output_image_ext = os.path.splitext(name)
-            output_path_text = os.path.join(self.output_folder, 'text', output_image_name + '.txt')
+            output_path_text = os.path.join(self.output_folder, 'text',
+                                            output_image_name + '.txt')
             output_path_image = os.path.join(self.output_folder, 'markup', name)
+
+            # OCR
+            with open(filepath, 'rb') as g:
+                img = g.read()
             try:
-                image = cv2.imdecode(np.fromfile(filepath, dtype=np.uint8), -1)[:, :, :3]
-                boxes = detect_text(image)
-                texts = recognize_text(image, boxes)
-            except Exception as e:
-                self.gui_message.emit(f'{filepath} - {e}')
+                img = np.frombuffer(img, dtype=np.uint8)  # TypeError if None
+                img = cv2.imdecode(img, cv2.IMREAD_UNCHANGED)  # cv2.error if None
+                img = alpha_to_color(img)  # AttributeError if None
+                img = cv2.bitwise_not(img)
+            except (cv2.error, TypeError, AttributeError):
+                self.gui_message.emit(f"{filepath} - Image file is broken.")
                 self.progress.emit((i + 1, n_files))
+                del img
+                continue
+            try:
+                boxes, texts = ocr_engine.detect_and_recognize(img)
+            except Exception as e:
+                self.gui_message.emit(f"{filepath} - {e}")
+                self.progress.emit((i + 1, n_files))
+                del img
                 continue
             if not texts:
                 self.gui_message.emit(f'{filepath} doesn\'t contain texts.')
             with open(output_path_text, 'w') as f:
                 for block in texts:
-                    f.write(block['text'] + '\n')
-                    image = np.ascontiguousarray(image, dtype=np.uint8)
-                    cv2.rectangle(image, block['text_box_position'][0], block['text_box_position'][2], (0, 0, 255))
-                    cv2.putText(image, str(round(block['confidence'], 2)), block['text_box_position'][0],
+                    f.write(block[0] + '\n')
+                    img = np.ascontiguousarray(img, dtype=np.uint8)
+                    cv2.rectangle(img, block['text_box_position'][0],
+                                  block['text_box_position'][2], (0, 0, 255))
+                    cv2.putText(img, str(round(block['confidence'], 2)),
+                                block['text_box_position'][0],
                                 cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255))
-            cv2.imencode(output_image_ext.lower(), image)[1].tofile(output_path_image)
-            del image, texts, boxes
+            cv2.imencode(output_image_ext.lower(), img)[1].tofile(output_path_image)
+            del img, texts, boxes
             progress_percentage = int((i + 1) / n_files * 100)
             self.progress.emit(progress_percentage)
-        self.gui_message.emit('Click "File | Open target folder" in menu bar to view the exported images.')
+        self.gui_message.emit(
+            'Click "File | Open target folder" in menu bar to view the exported images.')
         self.done.emit(True)
 
 
@@ -75,16 +99,29 @@ class FileOCR(QThread):
         self.output_folder = output_folder
 
     def run(self) -> None:
+        with open(self.input_file, 'rb') as g:
+            img = g.read()
         try:
-            image = cv2.imdecode(np.fromfile(self.input_file, dtype=np.uint8), -1)[:, :, :3]
-            boxes = detect_text(image)
-            texts = recognize_text(image, boxes)
-        except Exception as e:
-            self.gui_message.emit(f'{self.input_file} - {e}')
+            img = np.frombuffer(img, dtype=np.uint8)  # TypeError if None
+            img = cv2.imdecode(img, cv2.IMREAD_UNCHANGED)  # cv2.error if None
+            img = alpha_to_color(img)  # AttributeError if None
+            img = cv2.bitwise_not(img)
+        except (cv2.error, TypeError, AttributeError):
+            self.gui_message.emit(f"{self.input_file} - Image file is broken.")
             self.done.emit(True)
+            del img
+            return
+        if img.ndim == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        try:
+            boxes, texts = ocr_engine.detect_and_recognize(img)
+        except Exception as e:
+            self.gui_message.emit(f"{self.input_file} - {e}")
+            self.done.emit(True)
+            del img
             return
         for block in texts:
-            self.gui_message.emit(block['text'])
-        del image, boxes, texts
+            self.gui_message.emit(block[0])
+        del img, boxes, texts
         self.progress.emit(100)
         self.done.emit(True)

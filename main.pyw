@@ -4,7 +4,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from ocr import FolderOCR, FileOCR
-from math import max
 
 
 class MyWindow(QMainWindow):
@@ -75,14 +74,6 @@ class MyWindow(QMainWindow):
         run_menu = QMenu('&Recognize', self)
         run_menu.addActions([open_folder, open_file, paste_from_clipboard])
         menubar.addMenu(run_menu)
-
-        # About menu
-        about_the_author = QAction('&About the author', self)
-        about_the_author.triggered.connect(self.print_author_info)
-
-        about_menu = QMenu('&About', self)
-        about_menu.addActions([about_the_author])
-        menubar.addMenu(about_menu)
 
         self.setMenuBar(menubar)
 
@@ -185,11 +176,6 @@ class MyWindow(QMainWindow):
         cp = QDesktopWidget().availableGeometry().center()
         fg.moveCenter(cp)
         self.move(fg.topLeft())
-
-    @status_check_decorator(action_name='Print author\'s information')
-    def print_author_info(self):
-        with open('author_info.txt') as f:
-            self.message.append(f.read())
 
     # Deceive IDE grammar warning; must be written end of the class.
     status_check_decorator = staticmethod(status_check_decorator)
