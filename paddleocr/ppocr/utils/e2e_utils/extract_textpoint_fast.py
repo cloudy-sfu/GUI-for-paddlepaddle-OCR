@@ -348,7 +348,6 @@ def restore_poly(instance_yxs_list, seq_strs, p_border, ratio_w, ratio_h, src_w,
     keep_str_list = []
     for yx_center_line, keep_str in zip(instance_yxs_list, seq_strs):
         if len(keep_str) < 2:
-            print('--> too short, {}'.format(keep_str))
             continue
 
         offset_expand = 1.0
@@ -378,7 +377,6 @@ def restore_poly(instance_yxs_list, seq_strs, p_border, ratio_w, ratio_h, src_w,
         elif valid_set == 'totaltext':
             poly_list.append(detected_poly)
         else:
-            print('--> Not supported format.')
             exit(-1)
     return poly_list, keep_str_list
 

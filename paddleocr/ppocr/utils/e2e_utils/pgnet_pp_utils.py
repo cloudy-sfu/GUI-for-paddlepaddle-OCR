@@ -160,7 +160,6 @@ class PGNet_PostProcess(object):
             elif self.valid_set == 'totaltext':
                 poly_list.append(detected_poly)
             else:
-                print('--> Not supported format.')
                 exit(-1)
         data = {
             'points': poly_list,

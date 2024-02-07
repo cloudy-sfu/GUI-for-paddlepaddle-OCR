@@ -39,14 +39,14 @@ from paddleocr.ppocr.utils.logging import get_logger
 from paddleocr.tools.infer import predict_system
 from paddleocr.ppocr.utils.utility import check_and_read, get_image_file_list, alpha_to_color, binarize_img
 from paddleocr.ppocr.utils.network import maybe_download, download_with_progressbar, is_link, confirm_model_dir_url
-from paddleocr.tools.infer.utility import draw_ocr, str2bool, check_gpu
+from paddleocr.tools.infer.utility import draw_ocr, str2bool
 
 logger = get_logger()
 SUPPORT_DET_MODEL = ['DB']
 VERSION = '2.7.0.3'
 SUPPORT_REC_MODEL = ['CRNN', 'SVTR_LCNet']
-BASE_DIR = os.path.expanduser("~/.paddleocr/")
-
+BASE_DIR = os.path.abspath("./inference_models")
+os.makedirs(BASE_DIR, exist_ok=True)
 DEFAULT_OCR_MODEL_VERSION = 'PP-OCRv4'
 SUPPORT_OCR_MODEL_VERSION = ['PP-OCR', 'PP-OCRv2', 'PP-OCRv3', 'PP-OCRv4']
 DEFAULT_STRUCTURE_MODEL_VERSION = 'PP-StructureV2'
@@ -548,9 +548,9 @@ class PaddleOCR(predict_system.TextSystem):
         """
         params = parse_args(mMain=False)
         params.__dict__.update(**kwargs)
-        assert params.ocr_version in SUPPORT_OCR_MODEL_VERSION, "ocr_version must in {}, but get {}".format(
-            SUPPORT_OCR_MODEL_VERSION, params.ocr_version)
-        params.use_gpu = check_gpu(params.use_gpu)
+        assert params.ocr_version in SUPPORT_OCR_MODEL_VERSION, (
+            f"ocr_version must in {SUPPORT_OCR_MODEL_VERSION}, but get "
+            f"{params.ocr_version}")
 
         if not params.show_log:
             logger.setLevel(logging.INFO)

@@ -37,7 +37,6 @@ def intersection_iog(g, p):
     #union = g.area + p.area - inter
     union = p.area
     if union == 0:
-        print("p_area is very small")
         return 0
     else:
         return inter / union
@@ -191,10 +190,3 @@ def nms_locality(polys, thres=0.3):
     if len(S) == 0:
         return np.array([])
     return standard_nms(np.array(S), thres)
-
-
-if __name__ == '__main__':
-    # 343,350,448,135,474,143,369,359
-    print(
-        Polygon(np.array([[343, 350], [448, 135], [474, 143], [369, 359]]))
-        .area)

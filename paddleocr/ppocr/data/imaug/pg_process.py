@@ -118,11 +118,9 @@ class PGProcessTrain(object):
             quad = self.gen_quad_from_poly(poly)
             p_area = self.quad_area(quad)
             if abs(p_area) < 1:
-                print('invalid poly')
                 continue
             if p_area > 0:
                 if tag == False:
-                    print('poly in wrong direction')
                     tag = True  # reversed cases should be ignore
                 poly = poly[(0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2,
                              1), :]
@@ -742,7 +740,6 @@ class PGProcessTrain(object):
         d = a1 * b2 - a2 * b1
 
         if d == 0:
-            print('Cross point does not exist')
             return np.array([0, 0], dtype=np.float32)
         else:
             x = (b1 * c2 - b2 * c1) / d

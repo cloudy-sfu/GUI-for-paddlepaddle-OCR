@@ -13,7 +13,8 @@ class MyWindow(QMainWindow):
         dpi = self.screen().logicalDotsPerInch()
         font_size = max(6, round(22 - dpi / 12))
         os.makedirs('raw/clipboard/', exist_ok=True)
-        self.setStyleSheet(f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
+        self.setStyleSheet(f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: '
+                           f'{font_size}pt;')
         self.resize(800, 480)
         self.setWindowTitle('GUI for paddlepaddle OCR')
         self.center()
@@ -30,6 +31,15 @@ class MyWindow(QMainWindow):
         self.input_anytype_displayed = QLabel(self)
         self.pbar = QProgressBar(self)
         self.message = QTextEdit(self)
+        self.message.setText("paddlepaddleocr-v4-pyqt-5 Note: \n"
+                             "When you first infer with a new language, the program takes "
+                             "several minutes to download the inference model (depending "
+                             "to your Internet bandwidth). The progress bar is not made "
+                             "at the moment. Thank you for your patience. To check whether "
+                             "the downloading is stuck, please monitor the size of "
+                             "\"inference_models\" directory in the installation folder. "
+                             "It is expected to expand when downloading. If it stops "
+                             "expanding for several minutes, please restart this program.")
 
         main_part = QWidget(self)
         main_layout = QFormLayout(main_part)
@@ -111,12 +121,14 @@ class MyWindow(QMainWindow):
 
     @delayed_thread_check_decorator(action_name='Recognize folder')
     def ocr_batch(self):
-        fp = QFileDialog.getExistingDirectory(self, caption='Images to recognize', options=QFileDialog.ShowDirsOnly)
+        fp = QFileDialog.getExistingDirectory(self, caption='Images to recognize',
+                                              options=QFileDialog.ShowDirsOnly)
         if not (fp and os.path.isdir(fp)):
             self.message.append('The source to recognize does not exist.')
             self.delayed_thread_finished()
             return
-        dist = QFileDialog.getExistingDirectory(self, caption='Export to', options=QFileDialog.ShowDirsOnly)
+        dist = QFileDialog.getExistingDirectory(self, caption='Export to',
+                                                options=QFileDialog.ShowDirsOnly)
         if not (dist and os.path.exists(dist)):
             self.message.append('The target to export does not exist.')
             self.delayed_thread_finished()

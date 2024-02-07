@@ -83,9 +83,6 @@ class EASTPostProcess(object):
             import lanms
             boxes = lanms.merge_quadrangle_n9(boxes, nms_thresh)
         except:
-            print(
-                'You should install lanms by pip3 install lanms-nova to speed up nms_locality'
-            )
             boxes = nms_locality(boxes.astype(np.float64), nms_thresh)
         if boxes.shape[0] == 0:
             return []

@@ -75,7 +75,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.mode == "rec":
-        print("Generate rec label")
         gen_rec_label(args.input_path, args.output_label)
     elif args.mode == "det":
         gen_det_label(args.root_path, args.input_path, args.output_label)

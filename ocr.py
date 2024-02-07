@@ -2,14 +2,12 @@ import os
 import cv2
 import numpy as np
 from PyQt5.QtCore import *
+os.environ['PATH'] += ';' + os.path.abspath('mklml_win_2018.0.3.20180406/lib')
 from paddleocr import PaddleOCR
 from paddleocr.ppocr.utils.utility import alpha_to_color
 
 ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", show_log=False,
-                       det_algorithm='DB++',
-                       det_model_dir="inference_models/ch_PP-OCRv4_det_infer/",
-                       rec_model_dir="inference_models/ch_PP-OCRv4_rec_infer/",
-                       cls_model_dir="inference_models/ch_ppocr_mobile_v2.0_cls_infer/")
+                       det_algorithm='DB++', use_gpu=False)
 
 
 class FolderOCR(QThread):

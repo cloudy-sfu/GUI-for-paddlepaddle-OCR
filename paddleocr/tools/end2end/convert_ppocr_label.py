@@ -82,8 +82,6 @@ def convert_label(label_dir, mode="gt", save_dir="./save_results/"):
         with open(save_file, "w") as f:
             f.writelines(gt_dict[img_name])
 
-    print("The convert label saved in {}".format(save_dir))
-
 
 def parse_args():
     import argparse

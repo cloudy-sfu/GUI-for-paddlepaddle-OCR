@@ -62,7 +62,6 @@ def draw_debug_img(args):
         html.write('</style>\n')
         html.write('</table>\n')
         html.write('</html>\n</body>\n')
-    print(f"The html file saved in {html_path}")
     return
 
 

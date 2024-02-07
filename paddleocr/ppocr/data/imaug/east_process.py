@@ -386,8 +386,6 @@ class EASTProcessTrain(object):
         text_polys[:, :, 0] *= ratio
         text_polys[:, :, 1] *= ratio
         _, _, new_h, new_w = im.shape
-        #         print(im.shape)
-        #         self.draw_img_polys(im, text_polys)
         score_map, geo_map, training_mask = self.generate_quad(
             (new_h, new_w), text_polys, text_tags)
         return im, score_map, geo_map, training_mask

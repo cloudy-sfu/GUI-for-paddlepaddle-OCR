@@ -72,7 +72,6 @@ class SimpleDataSet(Dataset):
                 dataset_config['transforms'][shrink_map_id]['MakeShrinkMap'][
                     'epoch'] = seed if seed is not None else 0
             except Exception as E:
-                print(E)
                 return
 
     def get_image_info_list(self, file_list, ratio_list):

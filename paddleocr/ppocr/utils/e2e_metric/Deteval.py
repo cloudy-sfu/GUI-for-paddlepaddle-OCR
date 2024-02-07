@@ -321,7 +321,6 @@ def get_score_C(gt_label, text, pred_bboxes):
                         det_gt_iou = get_intersection(det_p,
                                                       gt_p) / det_p.area()
                     except:
-                        print(det_x, det_y, gt_p)
                     if det_gt_iou > threshold:
                         detections[det_id] = []
 

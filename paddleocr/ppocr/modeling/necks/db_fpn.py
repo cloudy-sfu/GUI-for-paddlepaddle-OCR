@@ -95,8 +95,6 @@ class DSConv(nn.Layer):
             elif self.act == "hardswish":
                 x = F.hardswish(x)
             else:
-                print("The activation function({}) is selected incorrectly.".
-                      format(self.act))
                 exit()
 
         x = self.conv3(x)

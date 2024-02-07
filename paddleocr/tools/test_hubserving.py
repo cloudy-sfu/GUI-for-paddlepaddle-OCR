@@ -86,7 +86,6 @@ def save_structure_res(res, save_folder, image_file):
                 to_excel(region['res'], excel_path)
             elif region['type'] == 'Figure':
                 x1, y1, x2, y2 = region['bbox']
-                print(region['bbox'])
                 roi_img = img[y1:y2, x1:x2, :]
                 img_path = os.path.join(excel_save_folder,
                                         '{}.jpg'.format(region['bbox']))

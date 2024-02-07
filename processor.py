@@ -15,7 +15,6 @@ class DBProcessTest:
         self.resize_type = 0
         if 'test_image_shape' in params:
             self.image_shape = params['test_image_shape']
-            # print(self.image_shape)
             self.resize_type = 1
         if 'max_side_len' in params:
             self.max_side_len = params['max_side_len']

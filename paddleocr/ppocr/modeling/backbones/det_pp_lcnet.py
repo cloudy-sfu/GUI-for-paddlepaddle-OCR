@@ -261,11 +261,9 @@ class PPLCNet(nn.Layer):
 
     def _load_pretrained(self, pretrained_url, use_ssld=False):
         if use_ssld:
-            pretrained_url = pretrained_url.replace("_pretrained",
-                                                    "_ssld_pretrained")
-        print(pretrained_url)
+            pretrained_url = pretrained_url.replace("_pretrained", "_ssld_pretrained")
         local_weight_path = get_path_from_url(
-            pretrained_url, os.path.expanduser("~/.paddleclas/weights"))
+            pretrained_url, os.path.abspath("./inference_models/weights"))
         param_state_dict = paddle.load(local_weight_path)
         self.set_dict(param_state_dict)
         return

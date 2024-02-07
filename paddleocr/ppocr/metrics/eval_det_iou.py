@@ -214,4 +214,3 @@ if __name__ == '__main__':
     for gt, pred in zip(gts, preds):
         results.append(evaluator.evaluate_image(gt, pred))
     metrics = evaluator.combine_results(results)
-    print(metrics)

@@ -27,6 +27,8 @@ Support recognizes Chinese and Latin characters from  `*.png` and `*.jpg` images
 
 **Compile from source code:**
 
+Download `mklml_win_2018.0.3.20180406.zip` from [Microsoft](https://learn.microsoft.com/en-us/cognitive-toolkit/setup-mkl-on-windows), unzip, and put in the program root as directory `mklml_win_2018.0.3.20180406/`. The expected file structure in this directory is shown in `mklml_index`.
+
 Run the following commands in the terminal:
 
 ```

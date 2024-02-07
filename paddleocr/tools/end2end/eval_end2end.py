@@ -57,9 +57,6 @@ def polygon_iou(poly1, poly2):
             union_area = poly1.area + poly2.area - inter_area
             iou = float(inter_area) / union_area
         except shapely.geos.TopologicalError:
-            # except Exception as e:
-            #     print(e)
-            print('shapely.geos.TopologicalError occurred, iou set to 0')
             iou = 0
     return iou
 
@@ -69,7 +66,6 @@ def ed(str1, str2):
 
 
 def e2e_eval(gt_dir, res_dir, ignore_blank=False):
-    print('start testing...')
     iou_thresh = 0.5
     val_names = os.listdir(gt_dir)
     num_gt_chars = 0
@@ -164,22 +160,6 @@ def e2e_eval(gt_dir, res_dir, ignore_blank=False):
                 ed_sum += ed(gt_str, dt_str)
                 num_gt_chars += len(gt_str)
                 gt_count += 1
-
-    eps = 1e-9
-    print('hit, dt_count, gt_count', hit, dt_count, gt_count)
-    precision = hit / (dt_count + eps)
-    recall = hit / (gt_count + eps)
-    fmeasure = 2.0 * precision * recall / (precision + recall + eps)
-    avg_edit_dist_img = ed_sum / len(val_names)
-    avg_edit_dist_field = ed_sum / (gt_count + eps)
-    character_acc = 1 - ed_sum / (num_gt_chars + eps)
-
-    print('character_acc: %.2f' % (character_acc * 100) + "%")
-    print('avg_edit_dist_field: %.2f' % (avg_edit_dist_field))
-    print('avg_edit_dist_img: %.2f' % (avg_edit_dist_img))
-    print('precision: %.2f' % (precision * 100) + "%")
-    print('recall: %.2f' % (recall * 100) + "%")
-    print('fmeasure: %.2f' % (fmeasure * 100) + "%")
 
 
 if __name__ == '__main__':

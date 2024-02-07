@@ -18,13 +18,10 @@ import sys
 import platform
 import cv2
 import numpy as np
-import paddle
 from PIL import Image, ImageDraw, ImageFont
 import math
 from paddle import inference
-import time
 import random
-from paddleocr.ppocr.utils.logging import get_logger
 
 
 def str2bool(v):
@@ -314,11 +311,7 @@ def get_infer_gpuid():
     sysstr = platform.system()
     if sysstr == "Windows":
         return 0
-
-    if not paddle.device.is_compiled_with_rocm:
-        cmd = "env | grep CUDA_VISIBLE_DEVICES"
-    else:
-        cmd = "env | grep HIP_VISIBLE_DEVICES"
+    cmd = "env | grep HIP_VISIBLE_DEVICES"
     env_cuda = os.popen(cmd).readlines()
     if len(env_cuda) == 0:
         return 0
@@ -655,12 +648,6 @@ def get_minarea_rect_crop(img, points):
     box = [points[index_a], points[index_b], points[index_c], points[index_d]]
     crop_img = get_rotate_crop_image(img, np.array(box))
     return crop_img
-
-
-def check_gpu(use_gpu):
-    if use_gpu and not paddle.is_compiled_with_cuda():
-        use_gpu = False
-    return use_gpu
 
 
 if __name__ == '__main__':
