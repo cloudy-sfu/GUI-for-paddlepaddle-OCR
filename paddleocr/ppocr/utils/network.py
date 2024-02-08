@@ -55,11 +55,12 @@ def maybe_download(model_storage_directory, url):
                 if filename is None:
                     continue
                 file = tarObj.extractfile(member)
-                with open(
-                        os.path.join(model_storage_directory, filename),
-                        'wb') as f:
+                with open(os.path.join(model_storage_directory, filename), 'wb') as f:
                     f.write(file.read())
-        os.remove(tmp_path)
+        try:
+            os.remove(tmp_path)
+        except PermissionError:
+            pass
 
 
 def maybe_download_params(model_path):

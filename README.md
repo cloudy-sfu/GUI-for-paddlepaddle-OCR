@@ -2,34 +2,34 @@
 
  The GUI for `paddlepaddle` OCR
 
-![](https://shields.io/badge/OS-Windows_10_64--bit-lightgray?style=flat-square)
-![](https://shields.io/badge/dependencies-Python_3.8-blue?style=flat-square)
-![](https://shields.io/badge/languages-zh,_en-pink?style=flat-square)
+![](https://shields.io/badge/OS-Windows_10_64--bit-lightgray)
+![](https://shields.io/badge/dependencies-Python_3.11-blue)
 
 ## Introduction
 
-A Windows GUI to perform optical character recognition using `paddlepaddle` OCR models. With this program, users can recognize text included in images from both the clipboard and the file system.
+A Windows GUI to perform optical character recognition using `paddlepaddle` OCR models. With this program, users can recognize text in images from the clipboard or files.
 
-Support recognizes Chinese and Latin characters from  `*.png` and `*.jpg` images.
+Support recognizing multiple languages' characters from  `*.png` and `*.jpg` images.
+
+Supported languages are listed in `languages.csv`.
 
 <details>
  <summary><b>Screenshot</b></summary>
- <img src="assets/image-20230612161702728.png" alt="screenshot">
+ <img src="assets/image-20240209025742208.png" alt="screenshot">
 </details>
-
 
 ## Usage
 
-**Release:**
+### Release
 
 1. Download and unzip the latest release.
 2. Run `GUI-for-paddlepaddle-OCR.exe`.
 
-**Compile from source code:**
+### Compile from source code
 
-Download `mklml_win_2018.0.3.20180406.zip` from [Microsoft](https://learn.microsoft.com/en-us/cognitive-toolkit/setup-mkl-on-windows), unzip, and put in the program root as directory `mklml_win_2018.0.3.20180406/`. The expected file structure in this directory is shown in `mklml_index`.
+Download `paddle_inference.zip` corresponding to `cpu_avx_mkl` from [paddlepaddle website](https://paddleinference.paddlepaddle.org.cn/master/user_guides/download_lib.html#windows) (accessed Feb 9, 2024), unzip, and put in the program root as directory `mklml/`. The expected file structure in this directory is shown in `mklml_index`.
 
-Run the following commands in the terminal:
+Run the following command:
 
 ```
 pip install -r requirements.txt
@@ -38,6 +38,12 @@ pyinstaller main.spec
 
 ## Acknowledgment
 
-[Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/ppocr_introduction.md#6-%E6%A8%A1%E5%9E%8B%E5%BA%93)
+[Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/paddleocr.py#L72)
 
-The license of this program doesn't cover `inference_models/` and `paddleocr/` directory.
+<u>Our license doesn't cover files at the following locations.</u> 
+
+```
+inference_models/
+paddleocr/
+```
+

@@ -8,7 +8,9 @@ a = Analysis(['main.pyw'],
              binaries=[],
              datas=[('paddleocr', 'paddleocr'),
                     ('inference_models', 'inference_models'),
-                    ('mklml_win_2018.0.3.20180406', 'mklml_win_2018.0.3.20180406'),],
+                    ('mklml', 'mklml'),
+                    # path/to/file -> destination_directory
+                    ('languages.csv', '.'),],
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},
@@ -42,4 +44,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='main')
+               name='GUI-for-paddlepaddle-OCR')

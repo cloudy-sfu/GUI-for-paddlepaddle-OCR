@@ -426,40 +426,17 @@ def parse_args(mMain=True):
 
 
 def parse_lang(lang):
-    latin_lang = [
-        'af', 'az', 'bs', 'cs', 'cy', 'da', 'de', 'es', 'et', 'fr', 'ga', 'hr',
-        'hu', 'id', 'is', 'it', 'ku', 'la', 'lt', 'lv', 'mi', 'ms', 'mt', 'nl',
-        'no', 'oc', 'pi', 'pl', 'pt', 'ro', 'rs_latin', 'sk', 'sl', 'sq', 'sv',
-        'sw', 'tl', 'tr', 'uz', 'vi', 'french', 'german'
-    ]
-    arabic_lang = ['ar', 'fa', 'ug', 'ur']
-    cyrillic_lang = [
-        'ru', 'rs_cyrillic', 'be', 'bg', 'uk', 'mn', 'abq', 'ady', 'kbd', 'ava',
-        'dar', 'inh', 'che', 'lbe', 'lez', 'tab'
-    ]
-    devanagari_lang = [
-        'hi', 'mr', 'ne', 'bh', 'mai', 'ang', 'bho', 'mah', 'sck', 'new', 'gom',
-        'sa', 'bgc'
-    ]
-    if lang in latin_lang:
-        lang = "latin"
-    elif lang in arabic_lang:
-        lang = "arabic"
-    elif lang in cyrillic_lang:
-        lang = "cyrillic"
-    elif lang in devanagari_lang:
-        lang = "devanagari"
-    assert lang in MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION][
-        'rec'], 'param lang must in {}, but got {}'.format(
-            MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION]['rec'].keys(), lang)
-    if lang == "ch":
-        det_lang = "ch"
-    elif lang == 'structure':
-        det_lang = 'structure'
-    elif lang in ["en", "latin"]:
-        det_lang = "en"
-    else:
-        det_lang = "ml"
+    if lang not in MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION]['rec']:
+        lang = 'ch'
+    match lang:
+        case "ch":
+            det_lang = "ch"
+        case "en":
+            det_lang = "en"
+        case "latin":
+            det_lang = "en"
+        case _:
+            det_lang = "ml"
     return lang, det_lang
 
 

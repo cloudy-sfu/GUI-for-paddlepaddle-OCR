@@ -114,6 +114,5 @@ dmypy.json
 .pyre/
 
 .idea
-raw
-mklml_win_2018.0.3.20180406
+mklml
 inference_models
