@@ -1,0 +1,126 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: [ "paddleocr-v4" ]
+  pull_request:
+    branches: [ "paddleocr-v4" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with: 
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    
+    - name: Extract latest version from commits
+      id: extract-version
+      run: |
+        $version = git log --pretty=format:%s | ForEach-Object {
+            if ($_ -match '^v\d+(\.\d+)+') {
+                $matches[0]
+            }
+        } | Select-Object -First 1
+        if (-not $version) {
+            throw "No version tag found in git log."
+        }
+        echo "Latest version: $version"
+        echo "VERSION_TAG=$version" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Get latest UPX version
+      id: get-upx
+      run: |
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/upx/upx/releases/latest"
+        $version = $response.tag_name -replace 'v',''
+        $downloadUrl = $response.assets | Where-Object { $_.name -match 'win64\.zip$' } | Select-Object -ExpandProperty browser_download_url
+        echo "UPX_VERSION=$version" >> $env:GITHUB_ENV
+        echo "UPX_URL=$downloadUrl" >> $env:GITHUB_ENV
+        echo "UPX_DIR=upx-$version-win64" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Install UPX
+      run: |
+        # Clean up any previous failed attempts
+        Remove-Item -Path upx -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path upx.zip -Force -ErrorAction SilentlyContinue
+        # Download and extract
+        Invoke-WebRequest -Uri $env:UPX_URL -OutFile upx.zip
+        Expand-Archive -Path upx.zip -DestinationPath upx -Force
+        # Verify UPX works
+        & "$env:GITHUB_WORKSPACE\upx\$env:UPX_DIR\upx.exe" --version
+      shell: pwsh
+
+    - name: Install mklml
+      run: |
+        Invoke-WebRequest -Uri "https://paddle-inference-lib.bj.bcebos.com/2.3.2/cxx_c/Windows/CPU/x86-64_avx-mkl-vs2017/paddle_inference.zip" -OutFile "paddle_inference.zip"
+        Expand-Archive -Path "paddle_inference.zip" -DestinationPath "mklml_1"
+        Move-Item -Path "mklml_1/paddle" -Destination "mklml"
+        Remove-Item -Path "mklml_1" -Recurse -Force
+        Remove-Item -Path "paddle_inference.zip" -Force
+      shell: pwsh
+    
+    - name: Create inference models folder
+      run: |
+        mkdir inference_models/whl
+      shell: pwsh
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      shell: cmd
+  
+    - name: Build the application
+      run: |
+        pyinstaller main.spec --upx-dir="$env:GITHUB_WORKSPACE\upx\$env:UPX_DIR"
+      shell: pwsh
+
+    - name: Get application name
+      id: app-name
+      run: |
+        $appName = Get-ChildItem -Path dist | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty Name
+        echo "APP_NAME=$appName" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Archive the built program
+      run: |
+        mkdir release
+        Compress-Archive -Path "dist\$env:APP_NAME\*" -DestinationPath "release\$env:APP_NAME.zip"
+      shell: pwsh
+
+    - name: Delete existed tag
+      run: |
+        try {
+          gh release delete $env:VERSION_TAG --yes
+        } catch {
+          Write-Host "No existing release found, skipped deleting."
+        }
+        try {
+          git push origin ":refs/tags/$env:VERSION_TAG"
+        } catch {
+          Write-Host "No existing tag found, skipped deleting."
+        }
+      shell: pwsh
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ env.VERSION_TAG }}
+        name: ${{ env.APP_NAME }}
+        files: release/${{ env.APP_NAME }}.zip
+        body: Automatically built and released by GitHub Actions.

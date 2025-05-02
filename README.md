@@ -27,7 +27,7 @@ Supported languages are listed in `languages.csv`.
 
 ### Compile from source code
 
-Download `paddle_inference.zip` corresponding to `cpu_avx_mkl` from [paddlepaddle website](https://paddleinference.paddlepaddle.org.cn/master/user_guides/download_lib.html#windows) (accessed Feb 9, 2024), unzip, and put in the program root as directory `mklml/`. The expected file structure in this directory is shown in `mklml_index`.
+Download `paddle_inference.zip` corresponding to `cpu_avx_mkl` from [paddlepaddle website](https://www.paddlepaddle.org.cn/inference/master/user_guides/download_lib.html#windows) (accessed 2025-05-02), unzip, and put in the program root as directory `mklml/`. The expected file structure in this directory is shown in `mklml_index`.
 
 Run the following command:
 
