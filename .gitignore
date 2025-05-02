@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/
@@ -114,5 +114,4 @@ dmypy.json
 .pyre/
 
 .idea
-mklml
 inference_models

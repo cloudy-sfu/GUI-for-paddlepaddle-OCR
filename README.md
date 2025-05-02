@@ -18,32 +18,39 @@ Supported languages are listed in `languages.csv`.
  <img src="assets/image-20240209025742208.png" alt="screenshot">
 </details>
 
+
 ## Usage
 
-### Release
+**From release:**
 
-1. Download and unzip the latest release.
-2. Run `GUI-for-paddlepaddle-OCR.exe`.
+Download and unzip the latest release.
 
-### Compile from source code
+Run `GUI for paddlepaddle OCR.exe`.
 
-Download `paddle_inference.zip` corresponding to `cpu_avx_mkl` from [paddlepaddle website](https://www.paddlepaddle.org.cn/inference/master/user_guides/download_lib.html#windows) (accessed 2025-05-02), unzip, and put in the program root as directory `mklml/`. The expected file structure in this directory is shown in `mklml_index`.
 
-Run the following command:
+
+**From source code:**
+
+Create a Python 3.11 virtual environment and activate.
+
+Run the following command.
 
 ```
 pip install -r requirements.txt
 pyinstaller main.spec
 ```
 
+
+
 ## Acknowledgment
 
 [Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/paddleocr.py#L72)
 
-<u>Our license doesn't cover files at the following locations.</u> 
+<u>Files at the following locations are not in the scope of our license. These locations are dependencies, and not considered as part of this program.</u> 
 
 ```
 inference_models/
 paddleocr/
+mklml/
 ```
 

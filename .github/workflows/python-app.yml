@@ -64,21 +64,7 @@ jobs:
         # Verify UPX works
         & "$env:GITHUB_WORKSPACE\upx\$env:UPX_DIR\upx.exe" --version
       shell: pwsh
-
-    - name: Install mklml
-      run: |
-        Invoke-WebRequest -Uri "https://paddle-inference-lib.bj.bcebos.com/2.3.2/cxx_c/Windows/CPU/x86-64_avx-mkl-vs2017/paddle_inference.zip" -OutFile "paddle_inference.zip"
-        Expand-Archive -Path "paddle_inference.zip" -DestinationPath "mklml_1"
-        Move-Item -Path "mklml_1/paddle" -Destination "mklml"
-        Remove-Item -Path "mklml_1" -Recurse -Force
-        Remove-Item -Path "paddle_inference.zip" -Force
-      shell: pwsh
-    
-    - name: Create inference models folder
-      run: |
-        mkdir inference_models/whl
-      shell: pwsh
-
+      
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -124,3 +110,5 @@ jobs:
         name: ${{ env.APP_NAME }}
         files: release/${{ env.APP_NAME }}.zip
         body: Automatically built and released by GitHub Actions.
+        draft: false
+        prerelease: false
