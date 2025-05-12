@@ -160,20 +160,23 @@ class InitializeModel(QThread):
     ocr_engine = pyqtSignal(PaddleOCR, name='ocr_engine')
     gui_message = pyqtSignal(str, name='gui_message')
     done = pyqtSignal(bool, name='done')
+    progress = pyqtSignal(int, name='progress')
 
     def __init__(self, lang_abbr):
         super(InitializeModel, self).__init__()
         self.lang_abbr = lang_abbr
 
     def run(self) -> None:
-        try:
-            engine = PaddleOCR(
-                use_angle_cls=True, lang=self.lang_abbr, show_log=False,
-                det_algorithm='DB++', use_gpu=False, enable_mkldnn=False,
-            )
-            self.ocr_engine.emit(engine)
-            self.gui_message.emit("The program has finished initializing the inference "
-                                  "model.")
-        except Exception as e:
-            self.gui_message.emit(e.__str__())
+        # try:
+        engine = PaddleOCR(
+            use_angle_cls=True, lang=self.lang_abbr, show_log=False,
+            det_algorithm='DB++', use_gpu=False, enable_mkldnn=False,
+            # in-func call self.progress.emit
+            progress_bar=self.progress
+        )
+        self.ocr_engine.emit(engine)
+        self.gui_message.emit(
+            "The program has finished initializing the inference model.")
+        # except Exception as e:
+        #     self.gui_message.emit(e.__str__())
         self.done.emit(True)

@@ -1,23 +1,33 @@
 # GUI for `paddlepaddle` OCR
 
- The GUI for `paddlepaddle` OCR
+ The GUI for `paddlepaddle` optical character recognition
 
-![](https://shields.io/badge/OS-Windows_10_64--bit-lightgray)
+![](https://shields.io/badge/OS-Windows_10_64--bit-navy)
 ![](https://shields.io/badge/dependencies-Python_3.11-blue)
 
 ## Introduction
 
-A Windows GUI to perform optical character recognition using `paddlepaddle` OCR models. With this program, users can recognize text in images from the clipboard or files.
+ The GUI for `paddlepaddle` optical character recognition.
 
-Support recognizing multiple languages' characters from  `*.png` and `*.jpg` images.
+Supported images formats: `.png, .jpg`
 
-Supported languages are listed in `languages.csv`.
+Supported source: clipboard, single image, folder of multiple images.
 
-<details>
- <summary><b>Screenshot</b></summary>
- <img src="assets/image-20240209025742208.png" alt="screenshot">
-</details>
+Supported languages (characters sets):
 
+- Chinese (simplified) & Latin
+- Latin
+- Arabic
+- Cyrillic
+- Devanagari
+- Chinese (traditional)
+- Korean
+- Japan
+- Tamil
+- Telugu
+- Kabardian
+
+![image-20250511161324886](./assets/image-20250511161324886.png)
 
 ## Usage
 
@@ -33,7 +43,7 @@ Run `GUI for paddlepaddle OCR.exe`.
 
 Create a Python 3.11 virtual environment and activate.
 
-Run the following command.
+Run the following commands in Windows command prompt.
 
 ```
 pip install -r requirements.txt
@@ -44,13 +54,12 @@ pyinstaller main.spec
 
 ## Acknowledgment
 
-[Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/paddleocr.py#L72)
+<u>The copyright of the unmodified content of the following content belongs to the original author and covered by the original license. The copyright of modified content are covered by our license. "modified content" means the minimum modified characters in the file that makes the program's behavior different.</u>
 
-<u>Files at the following locations are not in the scope of our license. These locations are dependencies, and not considered as part of this program.</u> 
+[Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/paddleocr.py#L72) as `inference_models`
 
-```
-inference_models/
-paddleocr/
-mklml/
-```
+[Intel oneAPI math kernel library 2019](https://www.intel.com/content/www/us/en/developer/articles/release-notes/intel-math-kernel-library-release-notes-and-new-features.html#inpage-nav-1) as `mklml`
+
+[paddleocr](https://github.com/PaddlePaddle/PaddleOCR) (modified) as `paddleocr`
+
 

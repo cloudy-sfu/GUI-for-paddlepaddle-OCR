@@ -11,21 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import os
-import sys
-import importlib
-import cv2
-import logging
-import numpy as np
-from pathlib import Path
 import base64
+import importlib.util
+import json
+import logging
+import os
+import shutil
+import sys
+import tarfile
 from io import BytesIO
+
+import cv2
+import numpy as np
+import requests
 from PIL import Image
+
+from paddleocr.ppocr.utils.logging import get_logger
+from paddleocr.ppocr.utils.utility import (check_and_read, get_image_file_list,
+                                           alpha_to_color, binarize_img)
+from paddleocr.tools.infer import predict_system
+from paddleocr.tools.infer.utility import draw_ocr, str2bool
 from paddleocr.tools.infer.utility import init_args
 
-__dir__ = os.path.dirname(__file__)
-sys.path.append(os.path.join(__dir__, ''))
 
 def _import_file(module_name, file_path, make_importable=False):
     spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -35,11 +42,6 @@ def _import_file(module_name, file_path, make_importable=False):
         sys.modules[module_name] = module
     return module
 
-from paddleocr.ppocr.utils.logging import get_logger
-from paddleocr.tools.infer import predict_system
-from paddleocr.ppocr.utils.utility import check_and_read, get_image_file_list, alpha_to_color, binarize_img
-from paddleocr.ppocr.utils.network import maybe_download, download_with_progressbar, is_link, confirm_model_dir_url
-from paddleocr.tools.infer.utility import draw_ocr, str2bool
 
 logger = get_logger()
 SUPPORT_DET_MODEL = ['DB']
@@ -51,337 +53,8 @@ DEFAULT_OCR_MODEL_VERSION = 'PP-OCRv4'
 SUPPORT_OCR_MODEL_VERSION = ['PP-OCR', 'PP-OCRv2', 'PP-OCRv3', 'PP-OCRv4']
 DEFAULT_STRUCTURE_MODEL_VERSION = 'PP-StructureV2'
 SUPPORT_STRUCTURE_MODEL_VERSION = ['PP-Structure', 'PP-StructureV2']
-MODEL_URLS = {
-    'OCR': {
-        'PP-OCRv4': {
-            'det': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar',
-                },
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar',
-                },
-                'ml': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/Multilingual_PP-OCRv3_det_infer.tar'
-                }
-            },
-            'rec': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/ppocr_keys_v1.txt'
-                },
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/en_dict.txt'
-                },
-                'korean': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/korean_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/korean_dict.txt'
-                },
-                'japan': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/japan_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/japan_dict.txt'
-                },
-                'chinese_cht': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/chinese_cht_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/chinese_cht_dict.txt'
-                },
-                'ta': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/ta_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/ta_dict.txt'
-                },
-                'te': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/te_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/te_dict.txt'
-                },
-                'ka': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/ka_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/ka_dict.txt'
-                },
-                'latin': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/latin_dict.txt'
-                },
-                'arabic': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/arabic_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/arabic_dict.txt'
-                },
-                'cyrillic': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/cyrillic_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/cyrillic_dict.txt'
-                },
-                'devanagari': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/devanagari_PP-OCRv4_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/devanagari_dict.txt'
-                },
-            },
-            'cls': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar',
-                }
-            },
-        },
-        'PP-OCRv3': {
-            'det': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese/ch_PP-OCRv3_det_infer.tar',
-                },
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar',
-                },
-                'ml': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/Multilingual_PP-OCRv3_det_infer.tar'
-                }
-            },
-            'rec': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese/ch_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/ppocr_keys_v1.txt'
-                },
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/en_dict.txt'
-                },
-                'korean': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/korean_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/korean_dict.txt'
-                },
-                'japan': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/japan_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/japan_dict.txt'
-                },
-                'chinese_cht': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/chinese_cht_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/chinese_cht_dict.txt'
-                },
-                'ta': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/ta_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/ta_dict.txt'
-                },
-                'te': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/te_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/te_dict.txt'
-                },
-                'ka': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/ka_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/ka_dict.txt'
-                },
-                'latin': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/latin_dict.txt'
-                },
-                'arabic': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/arabic_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/arabic_dict.txt'
-                },
-                'cyrillic': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/cyrillic_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/cyrillic_dict.txt'
-                },
-                'devanagari': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/devanagari_PP-OCRv3_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/devanagari_dict.txt'
-                },
-            },
-            'cls': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar',
-                }
-            },
-        },
-        'PP-OCRv2': {
-            'det': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv2/chinese/ch_PP-OCRv2_det_infer.tar',
-                },
-            },
-            'rec': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/PP-OCRv2/chinese/ch_PP-OCRv2_rec_infer.tar',
-                    'dict_path': './ppocr/utils/ppocr_keys_v1.txt'
-                }
-            },
-            'cls': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar',
-                }
-            },
-        },
-        'PP-OCR': {
-            'det': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_det_infer.tar',
-                },
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/en_ppocr_mobile_v2.0_det_infer.tar',
-                },
-                'structure': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/table/en_ppocr_mobile_v2.0_table_det_infer.tar'
-                }
-            },
-            'rec': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/ppocr_keys_v1.txt'
-                },
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/en_number_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/en_dict.txt'
-                },
-                'french': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/french_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/french_dict.txt'
-                },
-                'german': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/german_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/german_dict.txt'
-                },
-                'korean': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/korean_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/korean_dict.txt'
-                },
-                'japan': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/japan_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/japan_dict.txt'
-                },
-                'chinese_cht': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/chinese_cht_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/chinese_cht_dict.txt'
-                },
-                'ta': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/ta_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/ta_dict.txt'
-                },
-                'te': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/te_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/te_dict.txt'
-                },
-                'ka': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/ka_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/ka_dict.txt'
-                },
-                'latin': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/latin_ppocr_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/latin_dict.txt'
-                },
-                'arabic': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/arabic_ppocr_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/arabic_dict.txt'
-                },
-                'cyrillic': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/cyrillic_ppocr_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/cyrillic_dict.txt'
-                },
-                'devanagari': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/multilingual/devanagari_ppocr_mobile_v2.0_rec_infer.tar',
-                    'dict_path': './ppocr/utils/dict/devanagari_dict.txt'
-                },
-                'structure': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/table/en_ppocr_mobile_v2.0_table_rec_infer.tar',
-                    'dict_path': 'ppocr/utils/dict/table_dict.txt'
-                }
-            },
-            'cls': {
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar',
-                }
-            },
-        }
-    },
-    'STRUCTURE': {
-        'PP-Structure': {
-            'table': {
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/dygraph_v2.0/table/en_ppocr_mobile_v2.0_table_structure_infer.tar',
-                    'dict_path': 'ppocr/utils/dict/table_structure_dict.txt'
-                }
-            }
-        },
-        'PP-StructureV2': {
-            'table': {
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/ppstructure/models/slanet/en_ppstructure_mobile_v2.0_SLANet_infer.tar',
-                    'dict_path': 'ppocr/utils/dict/table_structure_dict.txt'
-                },
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/ppstructure/models/slanet/ch_ppstructure_mobile_v2.0_SLANet_infer.tar',
-                    'dict_path': 'ppocr/utils/dict/table_structure_dict_ch.txt'
-                }
-            },
-            'layout': {
-                'en': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/ppstructure/models/layout/picodet_lcnet_x1_0_fgd_layout_infer.tar',
-                    'dict_path':
-                    'ppocr/utils/dict/layout_dict/layout_publaynet_dict.txt'
-                },
-                'ch': {
-                    'url':
-                    'https://paddleocr.bj.bcebos.com/ppstructure/models/layout/picodet_lcnet_x1_0_fgd_layout_cdla_infer.tar',
-                    'dict_path':
-                    'ppocr/utils/dict/layout_dict/layout_cdla_dict.txt'
-                }
-            }
-        }
-    }
-}
+with open("./paddleocr/model_urls.json", "r") as f:
+    MODEL_URLS = json.load(f)
 
 
 def parse_args(mMain=True):
@@ -476,19 +149,15 @@ def img_decode(content: bytes):
     return cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
 
 
-def check_img(img):
-    if isinstance(img, bytes):
-        img = img_decode(img)
-    if isinstance(img, str):
-        # download net image
-        if is_link(img):
-            download_with_progressbar(img, 'tmp.jpg')
-            img = 'tmp.jpg'
-        image_file = img
-        img, flag_gif, flag_pdf = check_and_read(image_file)
+def check_img(img_file_or_byte):
+    if isinstance(img_file_or_byte, bytes):
+        img = img_decode(img_file_or_byte)
+    elif isinstance(img_file_or_byte, str):
+        image_fn = img_file_or_byte
+        img, flag_gif, flag_pdf = check_and_read(image_fn)
         if not flag_gif and not flag_pdf:
-            with open(image_file, 'rb') as f:
-                img_str = f.read()
+            with open(image_fn, 'rb') as g:
+                img_str = g.read()
                 img = img_decode(img_str)
             if img is None:
                 try:
@@ -505,19 +174,83 @@ def check_img(img):
                     img_array = np.frombuffer(image_decode, np.uint8)
                     img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
                 except:
-                    logger.error("error in loading image:{}".format(image_file))
+                    logger.error("error in loading image:{}".format(image_fn))
                     return None
         if img is None:
-            logger.error("error in loading image:{}".format(image_file))
+            logger.error("error in loading image:{}".format(image_fn))
             return None
-    if isinstance(img, np.ndarray) and len(img.shape) == 2:
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
+    elif isinstance(img_file_or_byte, np.ndarray) and len(img_file_or_byte.shape) == 2:
+        img = cv2.cvtColor(img_file_or_byte, cv2.COLOR_GRAY2BGR)
+    else:
+        img = None
+        logger.error("error in loading image.")
     return img
 
 
+def url_to_filename(url):
+    fn_ext = url.split('/')[-1]
+    fn, _ = os.path.splitext(fn_ext)
+    return fn
+
+
+class TarDownloader:
+    def __init__(self, url, output_dir):
+        # Remove existed (potentially broken) model directory
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Calc zipped file path
+        tar_fn = url.split('/')[-1]
+        tar_fp = os.path.join(output_dir, tar_fn)
+
+        # Calc file size
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        file_size = response.headers.get('Content-Length')
+        try:
+            file_size = int(file_size)
+        except ValueError:
+            raise Exception(f"Unknown file size of {tar_fn}")
+
+        self.file_size = file_size
+        self.response = response
+        self.model_dir = output_dir
+        self.tar_fp = tar_fp
+
+    def download(self, progress_bar, current_size, total_size):
+        with open(self.tar_fp, 'wb') as f:
+            for chunk in self.response.iter_content(chunk_size=8192):
+                f.write(chunk)
+                current_size += len(chunk)
+                progress_bar.emit(round(current_size / total_size * 100))
+        return current_size
+
+    def extract_and_delete(self):
+        with tarfile.open(self.tar_fp, 'r:*') as tar:
+            members = tar.getmembers()
+            top_level_dirs = set()
+            for m in members:
+                if not m.name or m.name.startswith('/') or m.name.startswith('./'):
+                    continue
+                parts = m.name.split('/', 1)
+                top_level_dirs.add(parts[0])
+                if len(top_level_dirs) > 1:
+                    break
+            strip = len(top_level_dirs) == 1
+            for m in members:
+                if strip:
+                    parts = m.name.split('/', 1)
+                    if len(parts) == 2:
+                        m.name = parts[1]
+                    else:
+                        continue  # Skip top-level directory itself
+                tar.extract(m, path=self.model_dir)
+        os.remove(self.tar_fp)
+
+
 class PaddleOCR(predict_system.TextSystem):
-    def __init__(self, **kwargs):
+    def __init__(self, progress_bar, **kwargs):
         """
         paddleocr package
         args:
@@ -534,35 +267,65 @@ class PaddleOCR(predict_system.TextSystem):
         self.use_angle_cls = params.use_angle_cls
         lang, det_lang = parse_lang(params.lang)
 
-        # init model dir
-        det_model_config = get_model_config('OCR', params.ocr_version, 'det',
-                                            det_lang)
-        params.det_model_dir, det_url = confirm_model_dir_url(
-            params.det_model_dir,
-            os.path.join(BASE_DIR, 'whl', 'det', det_lang),
-            det_model_config['url'])
-        rec_model_config = get_model_config('OCR', params.ocr_version, 'rec',
-                                            lang)
-        params.rec_model_dir, rec_url = confirm_model_dir_url(
-            params.rec_model_dir,
-            os.path.join(BASE_DIR, 'whl', 'rec', lang), rec_model_config['url'])
-        cls_model_config = get_model_config('OCR', params.ocr_version, 'cls',
-                                            'ch')
-        params.cls_model_dir, cls_url = confirm_model_dir_url(
-            params.cls_model_dir,
-            os.path.join(BASE_DIR, 'whl', 'cls'), cls_model_config['url'])
-        if params.ocr_version in ['PP-OCRv3', 'PP-OCRv4']:
-            params.rec_image_shape = "3, 48, 320"
-        else:
-            params.rec_image_shape = "3, 32, 320"
-        # download model if using paddle infer
-        if not params.use_onnx:
-            maybe_download(params.det_model_dir, det_url)
-            maybe_download(params.rec_model_dir, rec_url)
-            maybe_download(params.cls_model_dir, cls_url)
+        # remove model URL
+        det_url = MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION]['det'][det_lang]['url']
+        rec_url = MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION]['rec'][lang]['url']
+        cls_url = MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION]['cls']['ch']['url']
+
+        # local model path
+        params.det_model_dir = os.path.join(
+            BASE_DIR, 'whl', 'det', det_lang, url_to_filename(det_url))
+        params.rec_model_dir = os.path.join(
+            BASE_DIR, 'whl', 'rec', lang, url_to_filename(rec_url))
+        params.cls_model_dir = os.path.join(
+            BASE_DIR, 'whl', 'cls', url_to_filename(cls_url))
+
+        # image resolution
+        params.rec_image_shape = "3, 48, 320"
+
+        # download models
+        assert params.use_onnx is False, "ONNX inference models are not supported."
+        download_det = not all([
+            os.path.exists(os.path.join(params.det_model_dir, "inference.pdparams")),
+            os.path.exists(os.path.join(params.det_model_dir, "inference.pdparams.info")),
+            os.path.exists(os.path.join(params.det_model_dir, "inference.pdmodel")),
+        ])
+        download_rec = not all([
+            os.path.exists(os.path.join(params.rec_model_dir, "inference.pdparams")),
+            os.path.exists(os.path.join(params.rec_model_dir, "inference.pdparams.info")),
+            os.path.exists(os.path.join(params.rec_model_dir, "inference.pdmodel")),
+        ])
+        download_cls = not all([
+            os.path.exists(os.path.join(params.cls_model_dir, "inference.pdparams")),
+            os.path.exists(os.path.join(params.cls_model_dir, "inference.pdparams.info")),
+            os.path.exists(os.path.join(params.cls_model_dir, "inference.pdmodel")),
+        ])
+
+        total_size = 0
+        if download_det:
+            downloader_det = TarDownloader(det_url, params.det_model_dir)
+            total_size += downloader_det.file_size
+        if download_rec:
+            downloader_rec = TarDownloader(rec_url, params.rec_model_dir)
+            total_size += downloader_rec.file_size
+        if download_cls:
+            downloader_cls = TarDownloader(cls_url, params.cls_model_dir)
+            total_size += downloader_cls.file_size
+
+        current_size = 0
+        if download_det:
+            current_size = downloader_det.download(progress_bar, current_size, total_size)
+            downloader_det.extract_and_delete()
+        if download_rec:
+            current_size = downloader_rec.download(progress_bar, current_size, total_size)
+            downloader_rec.extract_and_delete()
+        if download_cls:
+            _ = downloader_cls.download(progress_bar, current_size, total_size)
+            downloader_cls.extract_and_delete()
+
         if params.rec_char_dict_path is None:
-            params.rec_char_dict_path = str(
-                Path(__file__).parent / rec_model_config['dict_path'])
+            char_dict_path = MODEL_URLS['OCR'][DEFAULT_OCR_MODEL_VERSION]['rec'][lang]['dict_path']
+            params.rec_char_dict_path = os.path.join("paddleocr", char_dict_path)
         logger.debug(params)
         # init det_model and rec_model
         super().__init__(params)

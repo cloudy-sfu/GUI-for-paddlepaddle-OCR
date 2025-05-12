@@ -4,14 +4,20 @@ from PyQt5.Qt import *
 from PyQt5.QtWidgets import *
 from ocr import *
 from PIL import Image
-from csv import reader as csv_reader
 
-
-with open("languages.csv", mode='r', encoding='utf-8') as f:
-    languages = {
-        row[0]: row[1]
-        for row in csv_reader(f)
-    }
+languages = {
+    'Chinese (simplified) & Latin': 'ch',
+    'Latin': 'latin',
+    'Arabic': 'arabic',
+    'Cyrillic': 'cyrillic',
+    'Devanagari': 'devanagari',
+    'Chinese (traditional)': 'chinese_cht',
+    'Korean': 'korean',
+    'Japan': 'japan',
+    'Tamil': 'ta',
+    'Telugu': 'te',
+    'Kabardian': 'ka'
+}
 not_initialized_message = ("OCR engine hasn't been initialized. The possible reasons "
                            "are as follows:\n"
                            "(1) If \"Language\" item is blank, then you haven't selected "
@@ -42,7 +48,7 @@ def pixmap_to_pillow_image(pixmap):
     width = q_image.width()
     height = q_image.height()
     if q_image.bits() is None:
-        return
+        return None
     buffer = q_image.bits().asarray(q_image.byteCount())
     pillow_image = Image.frombytes("RGBA", (width, height),
                                    buffer, "raw", "BGRA")
@@ -52,10 +58,12 @@ def pixmap_to_pillow_image(pixmap):
 class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__(flags=Qt.Window)
-        dpi = self.screen().logicalDotsPerInch()
-        font_size = max(6, round(22 - dpi / 12))
+        screen = QApplication.primaryScreen()
+        # Windows, Linux
+        zoom_pct = screen.logicalDotsPerInch() / 96
+        font_size = round(14 * zoom_pct)
         self.setStyleSheet(
-            f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
+            f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}px;')
         self.resize(1280, 720)
         self.setWindowTitle('GUI for paddlepaddle OCR')
         self.center()
@@ -72,7 +80,7 @@ class MyWindow(QMainWindow):
         self.pbar = QProgressBar(self)
         self.message = QTextEdit(self)
 
-        main_part = QWidget(self)
+        main_part = QWidget()
         main_layout = QFormLayout(main_part)
         main_layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         main_layout.addRow('Source:', self.source_displayed)
@@ -87,15 +95,15 @@ class MyWindow(QMainWindow):
 
     def create_menu_bar(self):
         # File menu
-        open_project_root = QAction('&Open backend files location', self)
-        open_project_root.triggered.connect(self.open_inference_models)
+        open_models_fp = QAction('&Open inference models folder', self)
+        open_models_fp.triggered.connect(self.open_inference_models)
         clear_models = QAction('&Clear inference models', self)
         clear_models.triggered.connect(self.clear_models)
-        switch_language = QAction('&Switch language ...', self)
-        switch_language.triggered.connect(self.switch_language)
-        switch_language.setShortcut('Ctrl+L')
-        force_idle = QAction('&Interrupt', self)
-        force_idle.triggered.connect(self.interrupt_operator)
+        switch_lang = QAction('&Switch language ...', self)
+        switch_lang.triggered.connect(self.switch_language)
+        switch_lang.setShortcut('Ctrl+L')
+        interrupt = QAction('&Interrupt', self)
+        interrupt.triggered.connect(self.interrupt_operator)
         close = QAction('&Exit', self)
         close.triggered.connect(self.close)
         close.setShortcut('Ctrl+W')
@@ -109,8 +117,7 @@ class MyWindow(QMainWindow):
         reco_clipboard.setShortcut('Ctrl+Shift+V')
         # First-level buttons
         file = QMenu('&File', self)
-        file.addActions([open_project_root, switch_language, force_idle, clear_models,
-                         close])
+        file.addActions([open_models_fp, clear_models, switch_lang, interrupt, close])
         recognize = QMenu('&Recognize', self)
         recognize.addActions([reco_folder, reco_file, reco_clipboard])
         # Menu bar
@@ -119,6 +126,7 @@ class MyWindow(QMainWindow):
         menubar.addMenu(recognize)
         self.setMenuBar(menubar)
 
+    @staticmethod
     def status_check_decorator(action_name, *args, **kwargs):
         def status_check_decorator_1(pyfunc):
             def status_check(self):
@@ -150,14 +158,14 @@ class MyWindow(QMainWindow):
             self.message.append(not_initialized_message)
             self.delayed_thread_finished()
             return
-        fp = QFileDialog.getExistingDirectory(self, caption='Images to recognize',
-                                              options=QFileDialog.ShowDirsOnly)
+        fp = QFileDialog.getExistingDirectory(
+            caption='Images to recognize', options=QFileDialog.ShowDirsOnly)
         if not (fp and os.path.isdir(fp)):
             self.message.append('The source to recognize does not exist.')
             self.delayed_thread_finished()
             return
-        dist = QFileDialog.getExistingDirectory(self, caption='Export to',
-                                                options=QFileDialog.ShowDirsOnly)
+        dist = QFileDialog.getExistingDirectory(
+            caption='Export to', options=QFileDialog.ShowDirsOnly)
         os.makedirs(dist, exist_ok=True)
         self.source_displayed.setText(fp)
         self.operator = FolderOCR(fp, dist, self.ocr_engine)
@@ -192,7 +200,7 @@ class MyWindow(QMainWindow):
             self.message.append(not_initialized_message)
             self.delayed_thread_finished()
             return
-        fp, _ = QFileDialog.getOpenFileName(self, filter='Images (*.png *.jpeg *.jpg)')
+        fp, _ = QFileDialog.getOpenFileName(filter='Images (*.png *.jpeg *.jpg)')
         if not (fp and os.path.isfile(fp)):
             self.message.append('The image to recognize does not exist.')
             self.delayed_thread_finished()
@@ -204,6 +212,7 @@ class MyWindow(QMainWindow):
         self.operator.gui_message.connect(self.message.append)
         self.operator.done.connect(self.delayed_thread_finished)
 
+    @staticmethod
     def open_inference_models():
         target = os.path.abspath("inference_models")
         os.makedirs(target, exist_ok=True)
@@ -259,6 +268,7 @@ class MyWindow(QMainWindow):
         self.operator.ocr_engine.connect(self.set_ocr_engine)
         self.operator.gui_message.connect(self.message.append)
         self.operator.done.connect(self.delayed_thread_finished)
+        self.operator.progress.connect(self.pbar.setValue)
 
     @status_check_decorator(action_name="Clear models")
     def clear_models(self):
@@ -266,10 +276,6 @@ class MyWindow(QMainWindow):
         shutil.rmtree('inference_models/whl/rec', ignore_errors=True)
         self.lang = None
         self.delayed_thread_finished()
-
-    # Deceive IDE grammar warning; must be written end of the class.
-    status_check_decorator = staticmethod(status_check_decorator)
-    open_inference_models = staticmethod(open_inference_models)
 
 
 if __name__ == '__main__':

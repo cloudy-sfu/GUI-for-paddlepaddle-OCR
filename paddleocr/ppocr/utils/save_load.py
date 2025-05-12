@@ -19,14 +19,16 @@ from __future__ import print_function
 import errno
 import os
 import pickle
-import six
+import sys
 
 import paddle
+import requests
+import six
 
 from paddleocr.ppocr.utils.logging import get_logger
-from paddleocr.ppocr.utils.network import maybe_download_params
 
 __all__ = ['load_model']
+MODELS_DIR = os.path.abspath("./inference_models")
 
 
 def _mkdir_if_not_exist(path, logger):
@@ -144,9 +146,25 @@ def load_model(config, model, optimizer=None, model_type='det'):
     return best_model_dict
 
 
-def load_pretrained_params(model, path):
+def load_pretrained_params(model, path_or_link):
     logger = get_logger()
-    path = maybe_download_params(path)
+    is_link = path_or_link is not None and path_or_link.startswith('http')
+    if os.path.exists(path_or_link) or not is_link:
+        path = path_or_link
+    else:
+        url = path_or_link
+        path = os.path.join(MODELS_DIR, url.split('/')[-1])
+        os.makedirs(MODELS_DIR, exist_ok=True)
+        logger = get_logger()
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(path, 'wb') as file:
+                for data in response.iter_content(1024):
+                    file.write(data)
+        else:
+            logger.error("Something went wrong while downloading models")
+            sys.exit(0)
+
     if path.endswith('.pdparams'):
         path = path.replace('.pdparams', '')
     assert os.path.exists(path + ".pdparams"), \
