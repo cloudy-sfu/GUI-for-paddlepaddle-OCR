@@ -2,12 +2,12 @@
 
  The GUI for `paddlepaddle` optical character recognition
 
-![](https://shields.io/badge/OS-Windows_10_64--bit-navy)
-![](https://shields.io/badge/dependencies-Python_3.11-blue)
+![](https://shields.io/badge/OS-Windows_11-navy)
+![](https://shields.io/badge/dependencies-Python_3.12-blue)
 
-## Introduction
 
- The GUI for `paddlepaddle` optical character recognition.
+
+*Developer tested in Windows 11. Theoretically we didn't introduce Windows 11 specific features. Windows 10 may work but cannot be guaranteed.*
 
 Supported images formats: `.png, .jpg`
 
@@ -29,19 +29,17 @@ Supported languages (characters sets):
 
 ![image-20250511161324886](./assets/image-20250511161324886.png)
 
+
+
 ## Usage
 
-**From release:**
-
-Download and unzip the latest release.
-
-Run `GUI for paddlepaddle OCR.exe`.
+Unzip the latest release and run `GUI for paddlepaddle OCR.exe`
 
 
 
-**From source code:**
+## Install (developers)
 
-Create a Python 3.11 virtual environment and activate.
+Create a Python 3.12 virtual environment and activate.
 
 Run the following commands in Windows command prompt.
 
@@ -58,8 +56,8 @@ pyinstaller main.spec
 
 [Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/paddleocr.py#L72) as `inference_models`
 
-[Intel oneAPI math kernel library 2019](https://www.intel.com/content/www/us/en/developer/articles/release-notes/intel-math-kernel-library-release-notes-and-new-features.html#inpage-nav-1) as `mklml`
-
 [paddleocr](https://github.com/PaddlePaddle/PaddleOCR) (modified) as `paddleocr`
 
 
+
+<!-- https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_rec/resolve/main/inference.pdiparams -->

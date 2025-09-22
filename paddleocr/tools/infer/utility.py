@@ -272,6 +272,8 @@ def create_predictor(args, mode, logger):
             config.delete_pass("fc_fuse_pass")  # not supported for table
         config.switch_use_feed_fetch_ops(False)
         config.switch_ir_optim(True)
+        config.disable_onednn()
+        config.disable_mkldnn()
 
         # create predictor
         predictor = inference.create_predictor(config)
