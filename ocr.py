@@ -53,14 +53,14 @@ class FolderOCR(QThread):
                 img = cv2.bitwise_not(img)
             except (cv2.error, TypeError, AttributeError):
                 self.gui_message.emit(f"{filepath} - Image file is broken.")
-                self.progress.emit((i + 1, n_files))
+                self.progress.emit((i + 1) / n_files)
                 del img
                 continue
             try:
                 boxes, texts = self.ocr_engine.detect_and_recognize(img)
             except Exception as e:
                 self.gui_message.emit(f"{filepath} - {e}")
-                self.progress.emit((i + 1, n_files))
+                self.progress.emit((i + 1) / n_files)
                 del img
                 continue
             if not texts:
@@ -166,16 +166,16 @@ class InitializeModel(QThread):
         self.lang_abbr = lang_abbr
 
     def run(self) -> None:
-        # try:
-        engine = PaddleOCR(
-            use_angle_cls=True, lang=self.lang_abbr, show_log=False,
-            det_algorithm='DB++', use_gpu=False, enable_mkldnn=False,
-            # in-func call self.progress.emit
-            progress_bar=self.progress
-        )
-        self.ocr_engine.emit(engine)
-        self.gui_message.emit(
-            "The program has finished initializing the inference model.")
-        # except Exception as e:
-        #     self.gui_message.emit(e.__str__())
+        try:
+            engine = PaddleOCR(
+                use_angle_cls=True, lang=self.lang_abbr, show_log=False,
+                det_algorithm='DB++', use_gpu=False, enable_mkldnn=False,
+                # in-func call self.progress.emit
+                progress_bar=self.progress
+            )
+            self.ocr_engine.emit(engine)
+            self.gui_message.emit(
+                "The program has finished initializing the inference model.")
+        except Exception as e:
+            self.gui_message.emit(e.__str__())
         self.done.emit(True)
