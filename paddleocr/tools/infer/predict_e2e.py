@@ -25,7 +25,8 @@ import numpy as np
 import time
 import sys
 
-import tools.infer.utility as utility
+import paddleocr.tools.infer.utility as utility
+from paddleocr.default_arguments import parse_args
 from paddleocr.ppocr.utils.logging import get_logger
 from paddleocr.ppocr.utils.utility import get_image_file_list, check_and_read
 from paddleocr.ppocr.data import create_operators, transform
@@ -139,7 +140,7 @@ class TextE2E(object):
 
 
 if __name__ == "__main__":
-    args = utility.parse_args()
+    args = parse_args()
     image_file_list = get_image_file_list(args.image_dir)
     text_detector = TextE2E(args)
     count = 0

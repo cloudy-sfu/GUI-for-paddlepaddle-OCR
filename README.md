@@ -7,7 +7,7 @@
 
 
 
-*Developer tested in Windows 11. Theoretically we didn't introduce Windows 11 specific features. Windows 10 may work but cannot be guaranteed.*
+*Built and tested on Windows 11. Theoretically not introduced features which are specific for Windows 11. Older Windows versions may work but cannot be guaranteed.*
 
 Supported images formats: `.png, .jpg`
 
@@ -15,8 +15,9 @@ Supported source: clipboard, single image, folder of multiple images.
 
 Supported languages (characters sets):
 
-- Chinese (simplified) & Latin
-- Latin
+- Chinese (simplified) & English
+- English
+- Latin [^1]
 - Arabic
 - Cyrillic
 - Devanagari
@@ -26,6 +27,9 @@ Supported languages (characters sets):
 - Tamil
 - Telugu
 - Kabardian
+
+[^1]: English characters set equal to non-space ASCII. Latin misses some punctuations (e.g. no backslash) but has decorated letters (e.g. `Å`).
+
 
 ![image-20250511161324886](./assets/image-20250511161324886.png)
 

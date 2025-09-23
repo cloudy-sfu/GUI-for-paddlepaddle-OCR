@@ -6,7 +6,8 @@ from ocr import *
 from PIL import Image
 
 languages = {
-    'Chinese (simplified) & Latin': 'ch',
+    'Chinese (simplified) & English': 'ch',
+    'English': 'en',
     'Latin': 'latin',
     'Arabic': 'arabic',
     'Cyrillic': 'cyrillic',
@@ -102,8 +103,8 @@ class MyWindow(QMainWindow):
         switch_lang = QAction('&Switch language ...', self)
         switch_lang.triggered.connect(self.switch_language)
         switch_lang.setShortcut('Ctrl+L')
-        interrupt = QAction('&Interrupt', self)
-        interrupt.triggered.connect(self.interrupt_operator)
+        # interrupt = QAction('&Interrupt', self)
+        # interrupt.triggered.connect(self.interrupt_operator)
         close = QAction('&Exit', self)
         close.triggered.connect(self.close)
         close.setShortcut('Ctrl+W')
@@ -117,7 +118,8 @@ class MyWindow(QMainWindow):
         reco_clipboard.setShortcut('Ctrl+Shift+V')
         # First-level buttons
         file = QMenu('&File', self)
-        file.addActions([open_models_fp, clear_models, switch_lang, interrupt, close])
+        # file.addActions([open_models_fp, clear_models, switch_lang, interrupt, close])
+        file.addActions([open_models_fp, clear_models, switch_lang, close])
         recognize = QMenu('&Recognize', self)
         recognize.addActions([reco_folder, reco_file, reco_clipboard])
         # Menu bar

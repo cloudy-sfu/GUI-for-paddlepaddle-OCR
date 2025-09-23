@@ -27,7 +27,8 @@ import math
 import time
 import traceback
 
-import tools.infer.utility as utility
+import paddleocr.tools.infer.utility as utility
+from paddleocr.default_arguments import parse_args
 from paddleocr.ppocr.postprocess import build_post_process
 from paddleocr.ppocr.utils.logging import get_logger
 from paddleocr.ppocr.utils.utility import get_image_file_list, check_and_read
@@ -146,6 +147,5 @@ def main(args):
         logger.info("Predicts of {}:{}".format(valid_image_file_list[ino],
                                                cls_res[ino]))
 
-
-if __name__ == "__main__":
-    main(utility.parse_args())
+if __name__ == '__main__':
+    main(parse_args())
