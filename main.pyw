@@ -6,15 +6,12 @@ from ocr import *
 from PIL import Image
 
 languages = {
-    'Chinese (simplified) & English': 'ch',
-    'English': 'en',
+    'Chinese & English & Japanese': 'universal',
     'Latin': 'latin',
     'Arabic': 'arabic',
     'Cyrillic': 'cyrillic',
     'Devanagari': 'devanagari',
-    'Chinese (traditional)': 'chinese_cht',
     'Korean': 'korean',
-    'Japan': 'japan',
     'Tamil': 'ta',
     'Telugu': 'te',
     'Kabardian': 'ka'

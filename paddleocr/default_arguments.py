@@ -19,7 +19,7 @@ def parse_args():
         vis_font_path='./doc/fonts/simfang.ttf', drop_score=0.5, e2e_algorithm='PGNet',
         e2e_model_dir=None, e2e_limit_side_len=768, e2e_limit_type='max',
         e2e_pgnet_score_thresh=0.5,
-        e2e_char_dict_path='./paddleocr/ppocr/utils/ic15_dict.txt',
+        e2e_char_dict_path='./paddleocr/ppocr/utils/dict/ic15_dict.txt',
         e2e_pgnet_valid_set='totaltext', e2e_pgnet_mode='fast', use_angle_cls=False,
         cls_model_dir=None, cls_image_shape='3, 48, 192', label_list=['0', '180'],
         cls_batch_num=6, cls_thresh=0.9, enable_mkldnn=False, cpu_threads=10,
@@ -28,6 +28,6 @@ def parse_args():
         draw_img_save_dir='./inference_results', save_crop_res=False,
         crop_res_save_dir='./output', use_mp=False, total_process_num=1, process_id=0,
         benchmark=False, save_log_path='./log_output/', show_log=True, use_onnx=False,
-        det=True, rec=True,
+        det=True, rec=True, use_mlu=False, use_gcu=False
     )
     return ns

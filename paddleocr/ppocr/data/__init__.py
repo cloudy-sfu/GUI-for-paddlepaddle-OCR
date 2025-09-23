@@ -18,19 +18,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
-import sys
-import numpy as np
-import skimage
-import paddle
 import signal
-import random
+import sys
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(__dir__, '../..')))
 
 import copy
-from paddle.io import Dataset, DataLoader, BatchSampler, DistributedBatchSampler
-import paddle.distributed as dist
+from paddle.io import DataLoader, BatchSampler, DistributedBatchSampler
 
 from paddleocr.ppocr.data.imaug import transform, create_operators
 from paddleocr.ppocr.data.simple_dataset import SimpleDataSet, MultiScaleDataSet

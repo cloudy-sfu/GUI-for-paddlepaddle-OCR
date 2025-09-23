@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
+import math
 import os
-import sys
 import platform
+import random
+import sys
+
 import cv2
 import numpy as np
+import paddle
+import yaml
 from PIL import Image, ImageDraw, ImageFont
-import math
 from paddle import inference
-import random
-
-import paddleocr
 
 
 def str2bool(v):
@@ -34,141 +34,204 @@ def str2int_tuple(v):
     return tuple([int(i.strip()) for i in v.split(",")])
 
 
-def create_predictor(args, mode, logger):
-    if mode == "det":
-        model_dir = args.det_model_dir
-    elif mode == 'cls':
-        model_dir = args.cls_model_dir
-    elif mode == 'rec':
-        model_dir = args.rec_model_dir
-    elif mode == 'table':
-        model_dir = args.table_model_dir
-    elif mode == 'ser':
-        model_dir = args.ser_model_dir
-    elif mode == 're':
-        model_dir = args.re_model_dir
-    elif mode == "sr":
-        model_dir = args.sr_model_dir
-    elif mode == 'layout':
-        model_dir = args.layout_model_dir
-    else:
-        model_dir = args.e2e_model_dir
+def load_config(file_path):
+    _, ext = os.path.splitext(file_path)
+    if ext not in [".yml", ".yaml"]:
+        raise ValueError(f"only support yaml files for now, got {file_path}")
+    with open(file_path, "rb") as file:
+        config = yaml.load(file, Loader=yaml.SafeLoader)
+    return config
 
-    if model_dir is None:
-        logger.info("not find {} model file path {}".format(mode, model_dir))
-        sys.exit(0)
-    if args.use_onnx:
-        import onnxruntime as ort
-        model_file_path = model_dir
-        if not os.path.exists(model_file_path):
-            raise ValueError("not find model file path {}".format(
-                model_file_path))
-        sess = ort.InferenceSession(model_file_path)
-        return sess, sess.get_inputs()[0], None, None
 
-    else:
-        file_names = ['model', 'inference']
-        for file_name in file_names:
-            model_file_path = '{}/{}.pdmodel'.format(model_dir, file_name)
-            params_file_path = '{}/{}.pdiparams'.format(model_dir, file_name)
-            if os.path.exists(model_file_path) and os.path.exists(
-                    params_file_path):
-                break
-        if not os.path.exists(model_file_path):
-            raise ValueError(
-                "not find model.pdmodel or inference.pdmodel in {}".format(
-                    model_dir))
-        if not os.path.exists(params_file_path):
-            raise ValueError(
-                "not find model.pdiparams or inference.pdiparams in {}".format(
-                    model_dir))
+def _convert_trt(
+    trt_cfg_setting,
+    pp_model_file,
+    pp_params_file,
+    trt_save_path,
+    device_id,
+    dynamic_shapes,
+    dynamic_shape_input_data,
+):
+    from paddle.tensorrt.export import Input, TensorRTConfig, convert
 
-        config = inference.Config(model_file_path, params_file_path)
+    def _set_trt_config():
+        for attr_name in trt_cfg_setting:
+            assert hasattr(
+                trt_config, attr_name
+            ), f"The `{type(trt_config)}` don't have the attribute `{attr_name}`!"
+            setattr(trt_config, attr_name, trt_cfg_setting[attr_name])
 
-        if hasattr(args, 'precision'):
-            if args.precision == "fp16" and args.use_tensorrt:
-                precision = inference.PrecisionType.Half
-            elif args.precision == "int8":
-                precision = inference.PrecisionType.Int8
-            else:
-                precision = inference.PrecisionType.Float32
-        else:
-            precision = inference.PrecisionType.Float32
-
-        if args.use_gpu:
-            gpu_id = get_infer_gpuid()
-            if gpu_id is None:
-                logger.warning(
-                    "GPU is not found in current device by nvidia-smi. Please check your device or ignore it if run on jetson."
-                )
-            config.enable_use_gpu(args.gpu_mem, args.gpu_id)
-            if args.use_tensorrt:
-                config.enable_tensorrt_engine(
-                    workspace_size=1 << 30,
-                    precision_mode=precision,
-                    max_batch_size=args.max_batch_size,
-                    min_subgraph_size=args.
-                    min_subgraph_size,  # skip the minmum trt subgraph
-                    use_calib_mode=False)
-
-                # collect shape
-                trt_shape_f = os.path.join(model_dir,
-                                           f"{mode}_trt_dynamic_shape.txt")
-
-                if not os.path.exists(trt_shape_f):
-                    config.collect_shape_range_info(trt_shape_f)
-                    logger.info(
-                        f"collect dynamic shape info into : {trt_shape_f}")
-                try:
-                    config.enable_tuned_tensorrt_dynamic_shape(trt_shape_f,
-                                                               True)
-                except Exception as E:
-                    logger.info(E)
-                    logger.info("Please keep your paddlepaddle-gpu >= 2.3.0!")
-
-        elif args.use_npu:
-            config.enable_custom_device("npu")
-        elif args.use_xpu:
-            config.enable_xpu(10 * 1024 * 1024)
-        else:
-            config.disable_gpu()
-            if args.enable_mkldnn:
-                # cache 10 different shapes for mkldnn to avoid memory leak
-                config.set_mkldnn_cache_capacity(10)
-                config.enable_mkldnn()
-                if args.precision == "fp16":
-                    config.enable_mkldnn_bfloat16()
-                if hasattr(args, "cpu_threads"):
-                    config.set_cpu_math_library_num_threads(args.cpu_threads)
-                else:
-                    # default cpu threads as 10
-                    config.set_cpu_math_library_num_threads(10)
-        # enable memory optim
-        config.enable_memory_optim()
-        config.disable_glog_info()
-        config.delete_pass("conv_transpose_eltwiseadd_bn_fuse_pass")
-        config.delete_pass("matmul_transpose_reshape_fuse_pass")
-        if mode == 're':
-            config.delete_pass("simplify_with_basic_ops_pass")
-        if mode == 'table':
-            config.delete_pass("fc_fuse_pass")  # not supported for table
-        config.switch_use_feed_fetch_ops(False)
-        config.switch_ir_optim(True)
-        config.disable_onednn()
+    def _get_predictor(model_file, params_file):
+        # HACK
+        config = inference.Config(str(model_file), str(params_file))
+        config.enable_use_gpu(100, device_id)
+        # NOTE: Disable oneDNN to circumvent a bug in Paddle Inference
         config.disable_mkldnn()
+        config.disable_glog_info()
+        return inference.create_predictor(config)
 
-        # create predictor
-        predictor = inference.create_predictor(config)
-        input_names = predictor.get_input_names()
-        if mode in ['ser', 're']:
-            input_tensor = []
-            for name in input_names:
-                input_tensor.append(predictor.get_input_handle(name))
+    dynamic_shape_input_data = dynamic_shape_input_data or {}
+
+    predictor = _get_predictor(pp_model_file, pp_params_file)
+    input_names = predictor.get_input_names()
+    for name in dynamic_shapes:
+        if name not in input_names:
+            raise ValueError(
+                f"Invalid input name {repr(name)} found in `dynamic_shapes`"
+            )
+    for name in input_names:
+        if name not in dynamic_shapes:
+            raise ValueError(f"Input name {repr(name)} not found in `dynamic_shapes`")
+    for name in dynamic_shape_input_data:
+        if name not in input_names:
+            raise ValueError(
+                f"Invalid input name {repr(name)} found in `dynamic_shape_input_data`"
+            )
+
+    trt_inputs = []
+    for name, candidate_shapes in dynamic_shapes.items():
+        # XXX: Currently we have no way to get the data type of the tensor
+        # without creating an input handle.
+        handle = predictor.get_input_handle(name)
+        dtype = _pd_dtype_to_np_dtype(handle.type())
+        min_shape, opt_shape, max_shape = candidate_shapes
+        if name in dynamic_shape_input_data:
+            min_arr = np.array(dynamic_shape_input_data[name][0], dtype=dtype).reshape(
+                min_shape
+            )
+            opt_arr = np.array(dynamic_shape_input_data[name][1], dtype=dtype).reshape(
+                opt_shape
+            )
+            max_arr = np.array(dynamic_shape_input_data[name][2], dtype=dtype).reshape(
+                max_shape
+            )
         else:
-            for name in input_names:
-                input_tensor = predictor.get_input_handle(name)
-        output_tensors = get_output_tensors(args, mode, predictor)
-        return predictor, input_tensor, output_tensors, config
+            min_arr = np.ones(min_shape, dtype=dtype)
+            opt_arr = np.ones(opt_shape, dtype=dtype)
+            max_arr = np.ones(max_shape, dtype=dtype)
+
+        # refer to: https://github.com/PolaKuma/Paddle/blob/3347f225bc09f2ec09802a2090432dd5cb5b6739/test/tensorrt/test_converter_model_resnet50.py
+        trt_input = Input((min_arr, opt_arr, max_arr))
+        trt_inputs.append(trt_input)
+
+    # Create TensorRTConfig
+    trt_config = TensorRTConfig(inputs=trt_inputs)
+    _set_trt_config()
+    trt_config.save_model_dir = trt_save_path
+    pp_model_path = pp_model_file.split(".")[0]
+    convert(pp_model_path, trt_config)
+
+
+def _pd_dtype_to_np_dtype(pd_dtype):
+    if pd_dtype == inference.DataType.FLOAT64:
+        return np.float64
+    elif pd_dtype == inference.DataType.FLOAT32:
+        return np.float32
+    elif pd_dtype == inference.DataType.INT64:
+        return np.int64
+    elif pd_dtype == inference.DataType.INT32:
+        return np.int32
+    elif pd_dtype == inference.DataType.UINT8:
+        return np.uint8
+    elif pd_dtype == inference.DataType.INT8:
+        return np.int8
+    else:
+        raise TypeError(f"Unsupported data type: {pd_dtype}")
+
+
+def get_model_files(model_dir, file_name):
+    params_file_path = f"{model_dir}/{file_name}.pdiparams"
+    assert os.path.exists(params_file_path), f"not find {file_name}.pdiparams in {model_dir}"
+    assert (
+        os.path.exists(f"{model_dir}/{file_name}.pdmodel")
+        or os.path.exists(f"{model_dir}/{file_name}.json")
+    ), f"neither {file_name}.json nor {file_name}.pdmodel was found in {model_dir}."
+    if os.path.exists(f"{model_dir}/{file_name}.json"):
+        model_file_path = f"{model_dir}/{file_name}.json"
+    else:
+        model_file_path = f"{model_dir}/{file_name}.pdmodel"
+    return model_file_path, params_file_path
+
+
+def create_predictor(args, mode):
+    match mode:
+        case "det":
+            model_dir = args.det_model_dir
+        case "cls":
+            model_dir = args.cls_model_dir
+        case "rec":
+            model_dir = args.rec_model_dir
+        case "ser":
+            model_dir = args.ser_model_dir
+        case "re":
+            model_dir = args.re_model_dir
+        case "sr":
+            model_dir = args.sr_model_dir
+        case _:
+            model_dir = args.e2e_model_dir
+    assert model_dir, f"not find {mode} model file path {model_dir}"
+
+    # PD MODELS
+    try:
+        model_file_path, params_file_path = get_model_files(model_dir, "inference")
+    except AssertionError:
+        model_file_path, params_file_path = get_model_files(model_dir, "model")
+    config = inference.Config(model_file_path, params_file_path)
+
+    # CPU
+    config.disable_gpu()
+    if args.enable_mkldnn is not None:
+        if args.enable_mkldnn:
+            # cache 10 different shapes for mkldnn to avoid memory leak
+            config.set_mkldnn_cache_capacity(10)
+            config.enable_mkldnn()
+            if args.precision == "fp16":
+                config.enable_mkldnn_bfloat16()
+        else:
+            if hasattr(config, "disable_mkldnn"):
+                config.disable_mkldnn()
+
+    if hasattr(args, "cpu_threads"):
+        config.set_cpu_math_library_num_threads(args.cpu_threads)
+    else:
+        # default cpu threads as 10
+        config.set_cpu_math_library_num_threads(10)
+
+    if hasattr(config, "enable_new_ir"):
+        config.enable_new_ir()
+    if hasattr(config, "enable_new_executor"):
+        config.enable_new_executor()
+
+    # enable memory optim
+    config.enable_memory_optim()
+    config.disable_glog_info()
+    if not args.use_gcu:  # for Enflame GCU(General Compute Unit)
+        config.delete_pass("conv_transpose_eltwiseadd_bn_fuse_pass")
+    config.delete_pass("matmul_transpose_reshape_fuse_pass")
+    if mode == "rec" and args.rec_algorithm == "SRN":
+        config.delete_pass("gpu_cpu_map_matmul_v2_to_matmul_pass")
+    if mode == "re":
+        config.delete_pass("simplify_with_basic_ops_pass")
+    if mode == "table":
+        config.delete_pass("fc_fuse_pass")  # not supported for table
+    config.switch_use_feed_fetch_ops(False)
+    config.switch_ir_optim(True)
+    config.disable_onednn()
+    config.disable_mkldnn()
+
+    # create predictor
+    predictor = inference.create_predictor(config)
+    input_names = predictor.get_input_names()
+    if mode in ["ser", "re"]:
+        input_tensor = []
+        for name in input_names:
+            input_tensor.append(predictor.get_input_handle(name))
+    else:
+        input_tensor = None
+        for name in input_names:
+            input_tensor = predictor.get_input_handle(name)
+    output_tensors = get_output_tensors(args, mode, predictor)
+    return predictor, input_tensor, output_tensors, config
 
 
 def get_output_tensors(args, mode, predictor):

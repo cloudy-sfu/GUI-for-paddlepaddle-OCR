@@ -140,7 +140,7 @@ class TextDetector(object):
         self.preprocess_op = create_operators(pre_process_list)
         self.postprocess_op = build_post_process(postprocess_params)
         self.predictor, self.input_tensor, self.output_tensors, self.config = utility.create_predictor(
-            args, 'det', logger)
+            args, 'det')
 
         if self.use_onnx:
             img_h, img_w = self.input_tensor.shape[2:]

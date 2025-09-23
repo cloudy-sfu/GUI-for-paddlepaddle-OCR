@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import base64
-import json
 import logging
 import os
 import shutil
@@ -22,6 +21,7 @@ from io import BytesIO
 import cv2
 import numpy as np
 import requests
+import yaml
 from PIL import Image
 
 from paddleocr.default_arguments import parse_args
@@ -29,13 +29,13 @@ from paddleocr.ppocr.utils.logging import get_logger
 from paddleocr.ppocr.utils.utility import (check_and_read, get_image_file_list,
                                            alpha_to_color, binarize_img)
 from paddleocr.tools.infer import predict_system
-from paddleocr.tools.infer.utility import draw_ocr, str2bool
+from paddleocr.tools.infer.utility import draw_ocr, str2bool, get_model_files
 
 logger = get_logger()
 base_dir = os.path.abspath("./inference_models")
 os.makedirs(base_dir, exist_ok=True)
 with open("./paddleocr/model_urls.json", "r") as f:
-    MODEL_URLS = json.load(f)
+    MODEL_URLS = yaml.safe_load(f)
 
 
 def img_decode(content: bytes):
@@ -157,27 +157,38 @@ class PaddleOCR(predict_system.TextSystem):
             logger.setLevel(logging.INFO)
         self.use_angle_cls = params.use_angle_cls
 
-        rec_lang = params.lang
-        if rec_lang not in MODEL_URLS['rec'].keys():
-            rec_lang = 'ch'
-
-        if rec_lang == 'ch':
-            det_lang = 'ch'
-        elif rec_lang in ('en', 'latin'):
-            det_lang = 'en'
-        else:
-            det_lang = 'ml'
+        rec_lang_all = MODEL_URLS['rec'].keys()
+        assert params.lang in rec_lang_all, \
+            (f"Character set of text recognition {params.lang} not supported. Supported "
+             f"items: {rec_lang_all}")
+        dict_all = MODEL_URLS['dict'].keys()
+        assert params.lang in dict_all, \
+            (f"Character set of dictionary {params.lang} not supported. Supported "
+             f"items: {dict_all}")
+        det_lang_all = MODEL_URLS['det'].keys()
+        match params.lang:
+            case "ch":
+                det_lang = "ch"
+            case "en" | "latin":
+                det_lang = "en"
+            case "universal":
+                det_lang = "universal"
+            case _:
+                det_lang = "ml"
+        assert det_lang in det_lang_all, \
+            (f"Character set of text detection {det_lang} not supported. Supported items: "
+             f"{det_lang_all}")
 
         # model URL
-        det_url = MODEL_URLS['det'][det_lang]['url']
-        rec_url = MODEL_URLS['rec'][rec_lang]['url']
-        cls_url = MODEL_URLS['cls']['ch']['url']
+        det_url = MODEL_URLS['det'][det_lang]
+        rec_url = MODEL_URLS['rec'][params.lang]
+        cls_url = MODEL_URLS['cls']
 
         # local model path
         params.det_model_dir = os.path.join(
             base_dir, 'whl', 'det', det_lang, url_to_filename(det_url))
         params.rec_model_dir = os.path.join(
-            base_dir, 'whl', 'rec', rec_lang, url_to_filename(rec_url))
+            base_dir, 'whl', 'rec', params.lang, url_to_filename(rec_url))
         params.cls_model_dir = os.path.join(
             base_dir, 'whl', 'cls', url_to_filename(cls_url))
 
@@ -186,21 +197,24 @@ class PaddleOCR(predict_system.TextSystem):
 
         # download models
         assert params.use_onnx is False, "ONNX inference models are not supported."
-        download_det = not all([
-            os.path.exists(os.path.join(params.det_model_dir, "inference.pdiparams")),
-            os.path.exists(os.path.join(params.det_model_dir, "inference.pdiparams.info")),
-            os.path.exists(os.path.join(params.det_model_dir, "inference.pdmodel")),
-        ])
-        download_rec = not all([
-            os.path.exists(os.path.join(params.rec_model_dir, "inference.pdiparams")),
-            os.path.exists(os.path.join(params.rec_model_dir, "inference.pdiparams.info")),
-            os.path.exists(os.path.join(params.rec_model_dir, "inference.pdmodel")),
-        ])
-        download_cls = not all([
-            os.path.exists(os.path.join(params.cls_model_dir, "inference.pdiparams")),
-            os.path.exists(os.path.join(params.cls_model_dir, "inference.pdiparams.info")),
-            os.path.exists(os.path.join(params.cls_model_dir, "inference.pdmodel")),
-        ])
+        try:
+            get_model_files(params.det_model_dir, "inference")
+        except AssertionError:
+            download_det = True
+        else:
+            download_det = False
+        try:
+            get_model_files(params.rec_model_dir, "inference")
+        except AssertionError:
+            download_rec = True
+        else:
+            download_rec = False
+        try:
+            get_model_files(params.cls_model_dir, "inference")
+        except AssertionError:
+            download_cls = True
+        else:
+            download_cls = False
 
         total_size = 0
         if download_det:
@@ -224,9 +238,8 @@ class PaddleOCR(predict_system.TextSystem):
             _ = downloader_cls.download(progress_bar, current_size, total_size)
             downloader_cls.extract_and_delete()
 
-        if params.rec_char_dict_path is None:
-            char_dict_path = MODEL_URLS['rec'][rec_lang]['dict_path']
-            params.rec_char_dict_path = os.path.join("paddleocr", char_dict_path)
+        char_dict_path = MODEL_URLS['dict'][params.lang]
+        params.rec_char_dict_path = os.path.join("paddleocr", char_dict_path)
         logger.debug(params)
         # init det_model and rec_model
         super().__init__(params)
