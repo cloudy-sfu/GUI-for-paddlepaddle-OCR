@@ -167,11 +167,7 @@ class PaddleOCR(predict_system.TextSystem):
              f"items: {dict_all}")
         det_lang_all = MODEL_URLS['det'].keys()
         match params.lang:
-            case "ch":
-                det_lang = "ch"
-            case "en" | "latin":
-                det_lang = "en"
-            case "universal":
+            case "universal" | "korean" | "latin" | "cyrillic" | "th" | "el" | "en":
                 det_lang = "universal"
             case _:
                 det_lang = "ml"

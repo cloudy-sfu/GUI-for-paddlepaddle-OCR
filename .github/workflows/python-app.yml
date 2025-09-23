@@ -5,9 +5,9 @@ name: Python application
 
 on:
   push:
-    branches: [ "paddleocr-v4" ]
+    branches: [ "paddleocr-v5" ]
   pull_request:
-    branches: [ "paddleocr-v4" ]
+    branches: [ "paddleocr-v5" ]
 
 permissions:
   contents: write

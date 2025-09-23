@@ -15,20 +15,22 @@ Supported source: clipboard, single image, folder of multiple images.
 
 Supported languages (characters sets):
 
-- Chinese (simplified) & English
-- English
-- Latin [^1]
-- Arabic
-- Cyrillic
-- Devanagari
-- Chinese (traditional)
-- Korean
-- Japan
+- Chinese & English[^1] & Japanese
+- Korean & English
 - Tamil
 - Telugu
 - Kabardian
+- Latin[^4]
+- Arabic
+- Cyrillic & English
+- Devanagari
+- Thai & English
+- Greek & English
+- English
 
-[^1]: English characters set equal to non-space ASCII. Latin misses some punctuations (e.g. no backslash) but has decorated letters (e.g. `Å`).
+[^1]: Equal to basic Latin characters set, or non-space ASCII.
+
+[^4]: Compared to basic Latin, extended Latin misses some punctuations (e.g. no backslash) but has decorated letters (e.g. `Å`).
 
 
 
@@ -57,13 +59,13 @@ Wait while the program is downloading and initializing the OCR model.
 >   The user may see connection error. In this case, try the following steps one by one until the initialization is successful. 
 >
 >   1.   Repeat the "switching language" step and the model will be re-initialized.
->   2.   Ensure network connection to `paddleocr.bj.bcebos.com` [^3] is good.
+>   2.   Ensure network connection to `bj.bcebos.com` [^3] is good.
 >   3.   Click `File -> Clear inference models` and repeat step 1, to remove broken files. Alternatively, click "Open inference models folder" and remove broken files manually.
 >        ![image-20250923172603201](./assets/image-20250923172603201.png)
 
 
 
-[^3]: [Source code](https://github.com/cloudy-sfu/GUI-for-paddlepaddle-OCR/blob/paddleocr-v4/paddleocr/model_urls.json)
+[^3]: [Source code](https://github.com/cloudy-sfu/GUI-for-paddlepaddle-OCR/blob/paddleocr-v5/paddleocr/model_urls.yaml)
 
 Prepare the image(s), from clipboard, as single file, or as a folder to OCR.
 
@@ -94,10 +96,7 @@ pyinstaller main.spec
 
 <u>The copyright of the unmodified content of the following content belongs to the original author and covered by the original license. The copyright of modified content are covered by our license. "modified content" means the minimum modified characters in the file that makes the program's behavior different.</u>
 
-[Inference models](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/paddleocr.py#L72) as `inference_models`
+[Inference models](https://www.paddleocr.ai/main/version3.x/pipeline_usage/OCR.html) as `inference_models`
 
 [paddleocr](https://github.com/PaddlePaddle/PaddleOCR) (modified) as `paddleocr`
 
-
-
-<!-- https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_rec/resolve/main/inference.pdiparams -->
