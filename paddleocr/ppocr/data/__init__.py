@@ -46,10 +46,9 @@ __all__ = [
 ]
 
 
-def term_mp(sig_num, frame):
+def term_mp():
     """ kill all child processes
     """
-    pid = os.getpid()
     pgid = os.getpgid(os.getpid())
     os.killpg(pgid, signal.SIGKILL)
 
