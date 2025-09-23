@@ -34,7 +34,7 @@ from paddleocr.tools.infer.utility import draw_ocr, str2bool, get_model_files
 logger = get_logger()
 base_dir = os.path.abspath("./inference_models")
 os.makedirs(base_dir, exist_ok=True)
-with open("./paddleocr/model_urls.json", "r") as f:
+with open("./paddleocr/model_urls.yaml", "r") as f:
     MODEL_URLS = yaml.safe_load(f)
 
 

@@ -1,0 +1,26 @@
+det:
+  universal: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_server_det_infer.tar
+  ch: https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
+  en: https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar
+  ml: https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/Multilingual_PP-OCRv3_det_infer.tar
+dict:
+  universal: ./ppocr/utils/dict/ppocrv5_dict.txt
+  korean: ./ppocr/utils/dict/korean_dict.txt
+  ta: ./ppocr/utils/dict/ta_dict.txt
+  te: ./ppocr/utils/dict/te_dict.txt
+  ka: ./ppocr/utils/dict/ka_dict.txt
+  latin: ./ppocr/utils/dict/latin_dict.txt
+  arabic: ./ppocr/utils/dict/arabic_dict.txt
+  cyrillic: ./ppocr/utils/dict/cyrillic_dict.txt
+  devanagari: ./ppocr/utils/dict/devanagari_dict.txt
+rec:
+  universal: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//PP-OCRv5_server_rec_infer.tar
+  korean: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/korean_PP-OCRv4_rec_infer.tar
+  ta: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/ta_PP-OCRv4_rec_infer.tar
+  te: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/te_PP-OCRv4_rec_infer.tar
+  ka: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/ka_PP-OCRv4_rec_infer.tar
+  latin: https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar
+  arabic: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/arabic_PP-OCRv4_rec_infer.tar
+  cyrillic: https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/cyrillic_PP-OCRv3_rec_infer.tar
+  devanagari: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/devanagari_PP-OCRv4_rec_infer.tar
+cls: https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar
