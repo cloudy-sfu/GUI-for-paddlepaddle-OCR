@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import base64
-import logging
 import os
 import shutil
 import tarfile
@@ -31,7 +30,6 @@ from paddleocr.ppocr.utils.utility import (check_and_read, get_image_file_list,
 from paddleocr.tools.infer import predict_system
 from paddleocr.tools.infer.utility import draw_ocr, str2bool, get_model_files
 
-logger = get_logger()
 base_dir = os.path.abspath("./inference_models")
 os.makedirs(base_dir, exist_ok=True)
 with open("./paddleocr/model_urls.yaml", "r") as f:
@@ -41,44 +39,6 @@ with open("./paddleocr/model_urls.yaml", "r") as f:
 def img_decode(content: bytes):
     np_arr = np.frombuffer(content, dtype=np.uint8)
     return cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
-
-
-def check_img(img_file_or_byte):
-    if isinstance(img_file_or_byte, bytes):
-        img = img_decode(img_file_or_byte)
-    elif isinstance(img_file_or_byte, str):
-        image_fn = img_file_or_byte
-        img, flag_gif, flag_pdf = check_and_read(image_fn)
-        if not flag_gif and not flag_pdf:
-            with open(image_fn, 'rb') as g:
-                img_str = g.read()
-                img = img_decode(img_str)
-            if img is None:
-                try:
-                    buf = BytesIO()
-                    image = BytesIO(img_str)
-                    im = Image.open(image)
-                    rgb = im.convert('RGB')
-                    rgb.save(buf, 'jpeg')
-                    buf.seek(0)
-                    image_bytes = buf.read()
-                    data_base64 = str(base64.b64encode(image_bytes),
-                                      encoding="utf-8")
-                    image_decode = base64.b64decode(data_base64)
-                    img_array = np.frombuffer(image_decode, np.uint8)
-                    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-                except:
-                    logger.error(f"error in loading image: {image_fn}")
-                    return None
-        if img is None:
-            logger.error(f"error in loading image: {image_fn}")
-            return None
-    elif isinstance(img_file_or_byte, np.ndarray) and len(img_file_or_byte.shape) == 2:
-        img = cv2.cvtColor(img_file_or_byte, cv2.COLOR_GRAY2BGR)
-    else:
-        img = None
-        logger.error("error in loading image.")
-    return img
 
 
 def url_to_filename(url):
@@ -153,8 +113,7 @@ class PaddleOCR(predict_system.TextSystem):
         params = parse_args()
         params.__dict__.update(**kwargs)
 
-        if not params.show_log:
-            logger.setLevel(logging.INFO)
+        self.logger = get_logger()
         self.use_angle_cls = params.use_angle_cls
 
         rec_lang_all = MODEL_URLS['rec'].keys()
@@ -236,9 +195,47 @@ class PaddleOCR(predict_system.TextSystem):
 
         char_dict_path = MODEL_URLS['dict'][params.lang]
         params.rec_char_dict_path = os.path.join("paddleocr", char_dict_path)
-        logger.debug(params)
+        self.logger.debug(params)
         # init det_model and rec_model
         super().__init__(params)
+
+    def check_img(self, img_file_or_byte):
+        if isinstance(img_file_or_byte, bytes):
+            img = img_decode(img_file_or_byte)
+        elif isinstance(img_file_or_byte, str):
+            image_fn = img_file_or_byte
+            img, flag_gif, flag_pdf = check_and_read(image_fn)
+            if not flag_gif and not flag_pdf:
+                with open(image_fn, 'rb') as g:
+                    img_str = g.read()
+                    img = img_decode(img_str)
+                if img is None:
+                    try:
+                        buf = BytesIO()
+                        image = BytesIO(img_str)
+                        im = Image.open(image)
+                        rgb = im.convert('RGB')
+                        rgb.save(buf, 'jpeg')
+                        buf.seek(0)
+                        image_bytes = buf.read()
+                        data_base64 = str(base64.b64encode(image_bytes),
+                                          encoding="utf-8")
+                        image_decode = base64.b64decode(data_base64)
+                        img_array = np.frombuffer(image_decode, np.uint8)
+                        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+                    except:
+                        self.logger.error(f"error in loading image: {image_fn}")
+                        return None
+            if img is None:
+                self.logger.error(f"error in loading image: {image_fn}")
+                return None
+        elif isinstance(img_file_or_byte, np.ndarray) and len(
+                img_file_or_byte.shape) == 2:
+            img = cv2.cvtColor(img_file_or_byte, cv2.COLOR_GRAY2BGR)
+        else:
+            img = None
+            self.logger.error("error in loading image.")
+        return img
 
     def ocr(self, img, det=True, rec=True, cls=True, bin_=False, inv=False,
             alpha_color=(255, 255, 255)):
@@ -259,13 +256,13 @@ class PaddleOCR(predict_system.TextSystem):
         """
         assert isinstance(img, (np.ndarray, list, str, bytes))
         if isinstance(img, list) and det == True:
-            logger.error('When input a list of images, det must be false')
+            self.logger.error('When input a list of images, det must be false')
             exit(0)
         if cls == True and self.use_angle_cls == False:
-            logger.warning(
+            self.logger.warning(
                 'Since the angle classifier is not initialized, it will not be used during the forward process'
             )
-        img = check_img(img)
+        img = self.check_img(img)
 
         def preprocess_image(_image):
             _image = alpha_to_color(_image, alpha_color)

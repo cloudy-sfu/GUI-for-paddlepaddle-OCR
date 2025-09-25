@@ -16,14 +16,13 @@ import math
 import os
 import platform
 import random
-import sys
 
 import cv2
 import numpy as np
-import paddle
 import yaml
 from PIL import Image, ImageDraw, ImageFont
-from paddle import inference
+from paddle.inference import DataType, Config
+from paddle.inference import create_predictor as paddle_create_predictor
 
 
 def str2bool(v):
@@ -63,12 +62,12 @@ def _convert_trt(
 
     def _get_predictor(model_file, params_file):
         # HACK
-        config = inference.Config(str(model_file), str(params_file))
+        config = Config(str(model_file), str(params_file))
         config.enable_use_gpu(100, device_id)
         # NOTE: Disable oneDNN to circumvent a bug in Paddle Inference
         config.disable_mkldnn()
         config.disable_glog_info()
-        return inference.create_predictor(config)
+        return paddle_create_predictor(config)
 
     dynamic_shape_input_data = dynamic_shape_input_data or {}
 
@@ -123,17 +122,17 @@ def _convert_trt(
 
 
 def _pd_dtype_to_np_dtype(pd_dtype):
-    if pd_dtype == inference.DataType.FLOAT64:
+    if pd_dtype == DataType.FLOAT64:
         return np.float64
-    elif pd_dtype == inference.DataType.FLOAT32:
+    elif pd_dtype == DataType.FLOAT32:
         return np.float32
-    elif pd_dtype == inference.DataType.INT64:
+    elif pd_dtype == DataType.INT64:
         return np.int64
-    elif pd_dtype == inference.DataType.INT32:
+    elif pd_dtype == DataType.INT32:
         return np.int32
-    elif pd_dtype == inference.DataType.UINT8:
+    elif pd_dtype == DataType.UINT8:
         return np.uint8
-    elif pd_dtype == inference.DataType.INT8:
+    elif pd_dtype == DataType.INT8:
         return np.int8
     else:
         raise TypeError(f"Unsupported data type: {pd_dtype}")
@@ -176,7 +175,7 @@ def create_predictor(args, mode):
         model_file_path, params_file_path = get_model_files(model_dir, "inference")
     except AssertionError:
         model_file_path, params_file_path = get_model_files(model_dir, "model")
-    config = inference.Config(model_file_path, params_file_path)
+    config = Config(model_file_path, params_file_path)
 
     # CPU
     config.disable_gpu()
@@ -220,7 +219,7 @@ def create_predictor(args, mode):
     config.disable_mkldnn()
 
     # create predictor
-    predictor = inference.create_predictor(config)
+    predictor = paddle_create_predictor(config)
     input_names = predictor.get_input_names()
     if mode in ["ser", "re"]:
         input_tensor = []
@@ -595,7 +594,3 @@ def get_minarea_rect_crop(img, points):
     box = [points[index_a], points[index_b], points[index_c], points[index_d]]
     crop_img = get_rotate_crop_image(img, np.array(box))
     return crop_img
-
-
-if __name__ == '__main__':
-    pass

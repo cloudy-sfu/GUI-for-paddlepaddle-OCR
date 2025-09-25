@@ -20,13 +20,12 @@ import os
 import sys
 import logging
 import functools
-import paddle.distributed as dist
 
 logger_initialized = {}
 
 
 @functools.lru_cache()
-def get_logger(name='ppocr', log_file=None, log_level=logging.DEBUG):
+def get_logger(name='ppocr', log_file=None, log_level=logging.INFO):
     """Initialize and get a logger by name.
     If the logger has not been initialized, this method will initialize the
     logger by adding one or two handlers, otherwise the initialized logger will
@@ -56,16 +55,13 @@ def get_logger(name='ppocr', log_file=None, log_level=logging.DEBUG):
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
-    if log_file is not None and dist.get_rank() == 0:
+    if log_file is not None:
         log_file_folder = os.path.split(log_file)[0]
         os.makedirs(log_file_folder, exist_ok=True)
         file_handler = logging.FileHandler(log_file, 'a')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-    if dist.get_rank() == 0:
-        logger.setLevel(log_level)
-    else:
-        logger.setLevel(logging.ERROR)
+    logger.setLevel(log_level)
     logger_initialized[name] = True
     logger.propagate = False
     return logger

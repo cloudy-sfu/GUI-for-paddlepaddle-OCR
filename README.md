@@ -15,21 +15,20 @@ Supported source: clipboard, single image, folder of multiple images.
 
 Supported languages (characters sets):
 
-- Chinese & English[^1] & Japanese
-- Korean & English
+- Chinese & Japanese & Latin (basic)[^1]
+- Korean & Latin (basic)
 - Tamil
 - Telugu
 - Kabardian
-- Latin[^4]
+- Latin (extended)[^4]
 - Arabic
-- Cyrillic & English
+- Cyrillic & Latin (basic)
 - Devanagari
-- Thai & English
-- Greek & English
-- English
+- Thai & Latin (basic)
+- Greek & Latin (basic)
+- Latin (basic)
 
-[^1]: Equal to basic Latin characters set, or non-space ASCII.
-
+[^1]: Equal to English characters set, or non-space ASCII.
 [^4]: Compared to basic Latin, extended Latin misses some punctuations (e.g. no backslash) but has decorated letters (e.g. `Å`).
 
 

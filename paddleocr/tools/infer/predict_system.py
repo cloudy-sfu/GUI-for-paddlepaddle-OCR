@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import sys
-import subprocess
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
@@ -23,26 +22,17 @@ os.environ["FLAGS_allocator_strategy"] = 'auto_growth'
 
 import cv2
 import copy
-import numpy as np
-import json
-import time
-import logging
-from PIL import Image
-import paddleocr.tools.infer.utility as utility
 import paddleocr.tools.infer.predict_rec as predict_rec
 import paddleocr.tools.infer.predict_det as predict_det
 import paddleocr.tools.infer.predict_cls as predict_cls
-from paddleocr.ppocr.utils.utility import get_image_file_list, check_and_read
 from paddleocr.ppocr.utils.logging import get_logger
-from paddleocr.tools.infer.utility import draw_ocr_box_txt, get_rotate_crop_image, get_minarea_rect_crop
-logger = get_logger()
+from paddleocr.tools.infer.utility import get_rotate_crop_image, get_minarea_rect_crop
+
 
 
 class TextSystem(object):
     def __init__(self, args):
-        if not args.show_log:
-            logger.setLevel(logging.INFO)
-
+        self.logger = get_logger()
         self.text_detector = predict_det.TextDetector(args)
         self.text_recognizer = predict_rec.TextRecognizer(args)
         self.use_angle_cls = args.use_angle_cls
@@ -61,7 +51,7 @@ class TextSystem(object):
                 os.path.join(output_dir,
                              f"mg_crop_{bno+self.crop_image_res_index}.jpg"),
                 img_crop_list[bno])
-            logger.debug(f"{bno}, {rec_res[bno]}")
+            self.logger.debug(f"{bno}, {rec_res[bno]}")
         self.crop_image_res_index += bbox_num
 
     def detect_and_recognize(self, img):

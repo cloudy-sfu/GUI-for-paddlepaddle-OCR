@@ -6,18 +6,18 @@ from ocr import *
 from PIL import Image
 
 languages = {
-    'Chinese & English & Japanese': 'universal',
-    'Korean & English': 'korean',
+    'Chinese & Japanese & Latin (basic)': 'universal',
+    'Korean & Latin (basic)': 'korean',
     'Tamil': 'ta',
     'Telugu': 'te',
     'Kabardian': 'ka',
-    'Latin': 'latin',
+    'Latin (extended)': 'latin',
     'Arabic': 'arabic',
-    'Cyrillic & English': 'cyrillic',
+    'Cyrillic & Latin (basic)': 'cyrillic',
     'Devanagari': 'devanagari',
-    'Thai & English': 'th',
-    'Greek & English': 'el',
-    'English': 'en',
+    'Thai & Latin (basic)': 'th',
+    'Greek & Latin (basic)': 'el',
+    'Latin (basic)': 'en',
 }
 not_initialized_message = ("OCR engine hasn't been initialized. The possible reasons "
                            "are as follows:\n"

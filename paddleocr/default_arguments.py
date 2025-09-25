@@ -27,7 +27,7 @@ def parse_args():
         sr_image_shape='3, 32, 128', sr_batch_num=1,
         draw_img_save_dir='./inference_results', save_crop_res=False,
         crop_res_save_dir='./output', use_mp=False, total_process_num=1, process_id=0,
-        benchmark=False, save_log_path='./log_output/', show_log=True, use_onnx=False,
+        benchmark=False, save_log_path='./log_output/', use_onnx=False,
         det=True, rec=True, use_mlu=False, use_gcu=False
     )
     return ns
