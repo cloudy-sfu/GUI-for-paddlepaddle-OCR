@@ -39,15 +39,19 @@ Unzip the latest release and run `GUI for paddlepaddle OCR.exe`
 
 For the first time starting the program, it takes several minutes[^2] before the main window is open and the icon appears in taskbar.
 
-[^2]: Observed and measured in the following hardware level: AMD Ryzen 5 5600U, 16GB DDR4 memory.
+[^2]: Observed in AMD Ryzen 5 5600U, 16GB DDR4 memory, in all PyQt5 programs in Windows 11.
 
 Press `Ctrl + L` or select `File -> Switch language` in the navigation bar.
 
 ![image-20250923170832482](./assets/image-20250923170832482.png)
 
-Select the language that text in image will be converted to. It can be an option for one language or mixed language, but only support one option instead of multiple.
+Select the character set and OCR model's download source. 
 
-![image-20250923170235305](./assets/image-20250923170235305.png)
+Character set: the user has to select one model only, but some models support the mixture of multiple character sets.
+
+Download source: for fastest speed, China mainland users are recommended to download from "Baidu cloud"; all other users are recommended to download from "Hugging face".
+
+![image-20250926164322019](./assets/image-20250926164322019.png)
 
 Wait while the program is downloading and initializing the OCR model.
 
@@ -58,13 +62,11 @@ Wait while the program is downloading and initializing the OCR model.
 >   The user may see connection error. In this case, try the following steps one by one until the initialization is successful. 
 >
 >   1.   Repeat the "switching language" step and the model will be re-initialized.
->   2.   Ensure network connection to `bj.bcebos.com` [^3] is good.
->   3.   Click `File -> Clear inference models` and repeat step 1, to remove broken files. Alternatively, click "Open inference models folder" and remove broken files manually.
+>   2.   Choose a different download source.
+>   3.   Click `File -> Clear inference models` and repeat step 2, to remove broken files. Alternatively, click "Open inference models folder" and remove broken files manually.
 >        ![image-20250923172603201](./assets/image-20250923172603201.png)
 
 
-
-[^3]: [Source code](https://github.com/cloudy-sfu/GUI-for-paddlepaddle-OCR/blob/paddleocr-v5/paddleocr/model_urls.yaml)
 
 Prepare the image(s), from clipboard, as single file, or as a folder to OCR.
 
@@ -74,9 +76,9 @@ Read the result in the message box.
 
 The progress only shows recognized images over total number of images, so the progress will be either 0% or 100% if recognizing single image from single file or clipboard.
 
+
+
 ## Install
-
-
 
 ### From source code
 

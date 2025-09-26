@@ -15,16 +15,16 @@ dict:
   el: ./ppocr/utils/dict/ppocrv5_el_dict.txt
   en: ./ppocr/utils/dict/ppocrv5_en_dict.txt
 rec:
-  universal: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//PP-OCRv5_server_rec_infer.tar
-  korean: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//korean_PP-OCRv5_mobile_rec_infer.tar
+  universal: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_server_rec_infer.tar
+  korean: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/korean_PP-OCRv5_mobile_rec_infer.tar
   ta: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/ta_PP-OCRv4_rec_infer.tar
   te: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/te_PP-OCRv4_rec_infer.tar
   ka: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/ka_PP-OCRv4_rec_infer.tar
-  latin: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//latin_PP-OCRv5_mobile_rec_infer.tar
+  latin: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/latin_PP-OCRv5_mobile_rec_infer.tar
   arabic: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/arabic_PP-OCRv4_rec_infer.tar
-  cyrillic: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//eslav_PP-OCRv5_mobile_rec_infer.tar
+  cyrillic: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/eslav_PP-OCRv5_mobile_rec_infer.tar
   devanagari: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/devanagari_PP-OCRv4_rec_infer.tar
-  th: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//th_PP-OCRv5_mobile_rec_infer.tar
-  el: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//el_PP-OCRv5_mobile_rec_infer.tar
-  en: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0//en_PP-OCRv5_mobile_rec_infer.tar
+  th: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/th_PP-OCRv5_mobile_rec_infer.tar
+  el: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/el_PP-OCRv5_mobile_rec_infer.tar
+  en: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/en_PP-OCRv5_mobile_rec_infer.tar
 cls: https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-LCNet_x1_0_textline_ori_infer.tar

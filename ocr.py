@@ -161,9 +161,10 @@ class InitializeModel(QThread):
     done = pyqtSignal(bool, name='done')
     progress = pyqtSignal(int, name='progress')
 
-    def __init__(self, lang_abbr):
+    def __init__(self, lang_abbr, mirror):
         super(InitializeModel, self).__init__()
         self.lang_abbr = lang_abbr
+        self.mirror = mirror
 
     def run(self) -> None:
         try:
@@ -171,7 +172,8 @@ class InitializeModel(QThread):
                 use_angle_cls=True, lang=self.lang_abbr, show_log=False,
                 det_algorithm='DB++', use_gpu=False, enable_mkldnn=False,
                 # in-func call self.progress.emit
-                progress_bar=self.progress
+                progress_bar=self.progress,
+                mirror=self.mirror,
             )
             self.ocr_engine.emit(engine)
             self.gui_message.emit(

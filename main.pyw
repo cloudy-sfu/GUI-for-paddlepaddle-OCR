@@ -19,6 +19,12 @@ languages = {
     'Greek & Latin (basic)': 'el',
     'Latin (basic)': 'en',
 }
+mirrors = {
+    "Baidu cloud (CN)": None,
+    "Hugging face": lambda name:
+    f"https://huggingface.co/cloudy-sfu/Paddle-OCR/resolve/main/{name}.tar",
+}
+
 not_initialized_message = ("OCR engine hasn't been initialized. The possible reasons "
                            "are as follows:\n"
                            "(1) If \"Language\" item is blank, then you haven't selected "
@@ -227,8 +233,7 @@ class MyWindow(QMainWindow):
         self.move(fg.topLeft())
 
     def create_language_box(self):
-        self.language_combo = QComboBox()
-        self.language_combo.addItems(list(languages.keys()))
+        # Dialog body
         self.language_box = QDialog()
         dpi = self.screen().logicalDotsPerInch() / 96
         font_size = 14 if dpi <= 1 else (
@@ -236,15 +241,25 @@ class MyWindow(QMainWindow):
         self.language_box.setStyleSheet(
             f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
         self.language_box.setMinimumWidth(480)
-        self.language_box.setWindowTitle('Select a language')
-        layout = QVBoxLayout()
-        hint = QLabel('Please select a supported language.')
-        hint.setWordWrap(True)
+        self.language_box.setWindowTitle('Language')
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.language_box.accept)
         button_box.rejected.connect(self.language_box.reject)
-        layout.addWidget(hint)
+        layout = QVBoxLayout()
+        # Content
+        lang_label = QLabel('Please select a supported character set.')
+        lang_label.setWordWrap(True)
+        layout.addWidget(lang_label)
+        self.language_combo = QComboBox()
+        self.language_combo.addItems(list(languages.keys()))
         layout.addWidget(self.language_combo)
+        mirror_label = QLabel('Please select the download source.')
+        mirror_label.setWordWrap(True)
+        layout.addWidget(mirror_label)
+        self.mirror_combo = QComboBox()
+        self.mirror_combo.addItems(list(mirrors.keys()))
+        layout.addWidget(self.mirror_combo)
+        # Dialog body, post-content
         layout.addWidget(button_box)
         self.language_box.setLayout(layout)
 
@@ -265,7 +280,9 @@ class MyWindow(QMainWindow):
         self.message.append("The program is downloading and initializing the "
                             "inference model.")
         lang_abbr = languages[self.lang]
-        self.operator = InitializeModel(lang_abbr)
+        mirror_key = self.mirror_combo.currentText()
+        mirror = mirrors[mirror_key]
+        self.operator = InitializeModel(lang_abbr, mirror)
         self.operator.start()
         self.operator.ocr_engine.connect(self.set_ocr_engine)
         self.operator.gui_message.connect(self.message.append)
@@ -274,8 +291,9 @@ class MyWindow(QMainWindow):
 
     @status_check_decorator(action_name="Clear models")
     def clear_models(self):
-        shutil.rmtree('inference_models/whl/det', ignore_errors=True)
-        shutil.rmtree('inference_models/whl/rec', ignore_errors=True)
+        shutil.rmtree('inference_models/det', ignore_errors=True)
+        shutil.rmtree('inference_models/rec', ignore_errors=True)
+        shutil.rmtree('inference_models/cls', ignore_errors=True)
         self.lang = None
         self.delayed_thread_finished()
 

@@ -104,7 +104,7 @@ class TarDownloader:
 
 
 class PaddleOCR(predict_system.TextSystem):
-    def __init__(self, progress_bar, **kwargs):
+    def __init__(self, progress_bar, mirror, **kwargs):
         """
         paddleocr package
         args:
@@ -138,14 +138,18 @@ class PaddleOCR(predict_system.TextSystem):
         det_url = MODEL_URLS['det'][det_lang]
         rec_url = MODEL_URLS['rec'][params.lang]
         cls_url = MODEL_URLS['cls']
+        det_model_fn = url_to_filename(det_url)
+        rec_model_fn = url_to_filename(rec_url)
+        cls_model_fn = url_to_filename(cls_url)
+        if mirror is not None:
+            det_url = mirror(det_model_fn)
+            rec_url = mirror(rec_model_fn)
+            cls_url = mirror(cls_model_fn)
 
         # local model path
-        params.det_model_dir = os.path.join(
-            base_dir, 'whl', 'det', det_lang, url_to_filename(det_url))
-        params.rec_model_dir = os.path.join(
-            base_dir, 'whl', 'rec', params.lang, url_to_filename(rec_url))
-        params.cls_model_dir = os.path.join(
-            base_dir, 'whl', 'cls', url_to_filename(cls_url))
+        params.det_model_dir = os.path.join(base_dir, 'det', det_model_fn)
+        params.rec_model_dir = os.path.join(base_dir, 'rec', rec_model_fn)
+        params.cls_model_dir = os.path.join(base_dir, 'cls', cls_model_fn)
 
         # image resolution
         params.rec_image_shape = "3, 48, 320"
