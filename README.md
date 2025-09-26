@@ -99,5 +99,7 @@ pyinstaller main.spec
 
 [Inference models](https://www.paddleocr.ai/main/version3.x/pipeline_usage/OCR.html) as `inference_models`
 
+[Intel oneAPI math kernel library 2019](https://www.intel.com/content/www/us/en/developer/articles/release-notes/intel-math-kernel-library-release-notes-and-new-features.html#inpage-nav-1) as `mklml`
+
 [paddleocr](https://github.com/PaddlePaddle/PaddleOCR) (modified) as `paddleocr`
 

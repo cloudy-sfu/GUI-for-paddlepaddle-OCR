@@ -179,17 +179,6 @@ def create_predictor(args, mode):
 
     # CPU
     config.disable_gpu()
-    if args.enable_mkldnn is not None:
-        if args.enable_mkldnn:
-            # cache 10 different shapes for mkldnn to avoid memory leak
-            config.set_mkldnn_cache_capacity(10)
-            config.enable_mkldnn()
-            if args.precision == "fp16":
-                config.enable_mkldnn_bfloat16()
-        else:
-            if hasattr(config, "disable_mkldnn"):
-                config.disable_mkldnn()
-
     if hasattr(args, "cpu_threads"):
         config.set_cpu_math_library_num_threads(args.cpu_threads)
     else:
