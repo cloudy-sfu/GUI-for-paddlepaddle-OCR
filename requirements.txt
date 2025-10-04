@@ -20,9 +20,9 @@ protobuf==6.32.1
 pyclipper==1.3.0.post6
 pyinstaller==6.16.0
 pyinstaller-hooks-contrib==2025.8
-PyQt5==5.15.11
-PyQt5-Qt5==5.15.2
-PyQt5_sip==12.17.0
+PyQt6==6.9.1
+PyQt6-Qt6==6.9.2
+PyQt6_sip==13.10.2
 pywin32-ctypes==0.2.3
 PyYAML==6.0.2
 requests==2.32.5

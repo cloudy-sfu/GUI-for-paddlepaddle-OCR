@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-from PyQt5.QtCore import *
+from PyQt6.QtCore import QThread, pyqtSignal
 os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.abspath('mklml')
 from paddleocr import PaddleOCR
 from paddleocr.ppocr.utils.utility import alpha_to_color

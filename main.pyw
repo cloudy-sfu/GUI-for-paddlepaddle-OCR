@@ -1,7 +1,8 @@
 import shutil
 import sys
-from PyQt5.Qt import *
-from PyQt5.QtWidgets import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtGui import QAction, QImage
+from PyQt6.QtCore import Qt
 from ocr import *
 from PIL import Image
 
@@ -51,12 +52,12 @@ not_initialized_message = ("OCR engine hasn't been initialized. The possible rea
 
 def pixmap_to_pillow_image(pixmap):
     q_image = pixmap.toImage()
-    q_image = q_image.convertToFormat(QImage.Format_RGBA8888)
+    q_image = q_image.convertToFormat(QImage.Format.Format_RGBA8888)
     width = q_image.width()
     height = q_image.height()
     if q_image.bits() is None:
         return None
-    buffer = q_image.bits().asarray(q_image.byteCount())
+    buffer = q_image.bits().asarray(q_image.sizeInBytes())
     pillow_image = Image.frombytes("RGBA", (width, height),
                                    buffer, "raw", "BGRA")
     return pillow_image
@@ -64,14 +65,8 @@ def pixmap_to_pillow_image(pixmap):
 
 class MyWindow(QMainWindow):
     def __init__(self):
-        super(MyWindow, self).__init__(flags=Qt.Window)
-        screen = QApplication.primaryScreen()
-        # Windows, Linux
-        zoom_pct = screen.logicalDotsPerInch() / 96
-        font_size = round(14 * zoom_pct)
-        self.setStyleSheet(
-            f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}px;')
-        self.resize(1280, 720)
+        super(MyWindow, self).__init__(flags=Qt.WindowType.Window)
+        self.resize(960, 540)
         self.setWindowTitle('GUI for paddlepaddle OCR')
         self.center()
 
@@ -89,7 +84,7 @@ class MyWindow(QMainWindow):
 
         main_part = QWidget()
         main_layout = QFormLayout(main_part)
-        main_layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         main_layout.addRow('Source:', self.source_displayed)
         main_layout.addRow('Language:', self.lang_displayed)
         main_layout.addRow('Progress:', self.pbar)
@@ -167,13 +162,13 @@ class MyWindow(QMainWindow):
             self.delayed_thread_finished()
             return
         fp = QFileDialog.getExistingDirectory(
-            caption='Images to recognize', options=QFileDialog.ShowDirsOnly)
+            caption='Images to recognize', options=QFileDialog.Option.ShowDirsOnly)
         if not (fp and os.path.isdir(fp)):
             self.message.append('The source to recognize does not exist.')
             self.delayed_thread_finished()
             return
         dist = QFileDialog.getExistingDirectory(
-            caption='Export to', options=QFileDialog.ShowDirsOnly)
+            caption='Export to', options=QFileDialog.Option.ShowDirsOnly)
         os.makedirs(dist, exist_ok=True)
         self.source_displayed.setText(fp)
         self.operator = FolderOCR(fp, dist, self.ocr_engine)
@@ -228,21 +223,18 @@ class MyWindow(QMainWindow):
 
     def center(self):
         fg = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
+        cp = self.screen().availableGeometry().center()
         fg.moveCenter(cp)
         self.move(fg.topLeft())
 
     def create_language_box(self):
         # Dialog body
         self.language_box = QDialog()
-        dpi = self.screen().logicalDotsPerInch() / 96
-        font_size = 14 if dpi <= 1 else (
-            12 if 1 < dpi <= 1.25 else (10 if 1.25 < dpi <= 1.5 else 8))
-        self.language_box.setStyleSheet(
-            f'font-family: "Microsoft YaHei", Calibri, Ubuntu; font-size: {font_size}pt;')
-        self.language_box.setMinimumWidth(480)
+        self.language_box.setMinimumWidth(360)
         self.language_box.setWindowTitle('Language')
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         button_box.accepted.connect(self.language_box.accept)
         button_box.rejected.connect(self.language_box.reject)
         layout = QVBoxLayout()
@@ -268,8 +260,8 @@ class MyWindow(QMainWindow):
 
     @status_check_decorator(action_name='Initialize OCR engine')
     def switch_language(self):
-        action = self.language_box.exec_()
-        if action != QDialog.Accepted:
+        action = self.language_box.exec()
+        if action != QDialog.DialogCode.Accepted:
             self.delayed_thread_finished()
             return
         self.lang = self.language_combo.currentText()
@@ -300,6 +292,17 @@ class MyWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    screen = app.primaryScreen()
+    # Windows, Linux
+    zoom_pct = screen.logicalDotsPerInch() / 96
+    font_size = round(12 * zoom_pct)
+    app.setStyleSheet(
+        f'QWidget {{'
+        f'    font-family: "Microsoft YaHei", Calibri, Ubuntu; '
+        f'    font-size: {font_size}pt;'
+        f'}}'
+    )
+
     myw = MyWindow()
     myw.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
