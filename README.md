@@ -43,19 +43,19 @@ For the first time starting the program, it takes several minutes[^2] before the
 
 Press `Ctrl + L` or select `File -> Switch language` in the navigation bar.
 
-![image-20250923170832482](./assets/image-20250923170832482.png)
+![image-20251024235303038](./assets/image-20251024235303038.png)
 
 Select the character set and OCR model's download source. 
 
 Character set: the user has to select one model only, but some models support the mixture of multiple character sets.
 
-Download source: for fastest speed, China mainland users are recommended to download from "Baidu cloud"; all other users are recommended to download from "Hugging face".
+Download source: for fastest speed, China mainland users are recommended to download from "Baidu cloud"; all other users are recommended to download from "GitHub".
 
-![image-20250926164322019](./assets/image-20250926164322019.png)
+![image-20251024235236379](./assets/image-20251024235236379.png)
 
 Wait while the program is downloading and initializing the OCR model.
 
-![image-20250923170412332](./assets/image-20250923170412332.png)
+![image-20251024235325016](./assets/image-20251024235325016.png)
 
 >   [!NOTE]
 >
@@ -64,13 +64,12 @@ Wait while the program is downloading and initializing the OCR model.
 >   1.   Repeat the "switching language" step and the model will be re-initialized.
 >   2.   Choose a different download source.
 >   3.   Click `File -> Clear inference models` and repeat step 2, to remove broken files. Alternatively, click "Open inference models folder" and remove broken files manually.
->        ![image-20250923172603201](./assets/image-20250923172603201.png)
 
 
 
 Prepare the image(s), from clipboard, as single file, or as a folder to OCR.
 
-![image-20250923172812482](./assets/image-20250923172812482.png)
+![image-20251024235359223](./assets/image-20251024235359223.png)
 
 Read the result in the message box.
 
