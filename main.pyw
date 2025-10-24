@@ -22,8 +22,9 @@ languages = {
 }
 mirrors = {
     "Baidu cloud (CN)": None,
-    "Hugging face": lambda name:
-    f"https://huggingface.co/cloudy-sfu/Paddle-OCR/resolve/main/{name}.tar",
+    "GitHub": lambda name:
+    f"https://raw.githubusercontent.com/cloudy-sfu/GUI-for-paddlepaddle-OCR/refs/heads/"
+    f"paddleocr-v5/models/{name}.tar"
 }
 
 not_initialized_message = ("OCR engine hasn't been initialized. The possible reasons "
